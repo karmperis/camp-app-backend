@@ -80,3 +80,35 @@ CREATE TABLE users
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+/*
+============================================================================
+Domain tables
+============================================================================
+Tables for business logic.
+*/
+
+CREATE TABLE guardians
+(
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    user_id BIGINT NULL,
+    uuid BINARY(16) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    identity_number VARCHAR(20) NOT NULL,
+    phone_number VARCHAR(20) NOT NULL,
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+
+    CONSTRAINT pk_guardians PRIMARY KEY (id),
+    CONSTRAINT uk_guardians_user_id UNIQUE (user_id),
+    CONSTRAINT uk_guardians_uuid UNIQUE (uuid),
+    CONSTRAINT uk_guardians_identity_number UNIQUE (identity_number),
+
+    CONSTRAINT fk_guardians_user
+        FOREIGN KEY (user_id) REFERENCES users (id)
+            ON DELETE RESTRICT
+
+)ENGINE = InnoDB
+ DEFAULT CHARSET = utf8mb4
+ COLLATE = utf8mb4_0900_ai_ci;
