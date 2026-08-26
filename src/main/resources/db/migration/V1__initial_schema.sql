@@ -112,3 +112,22 @@ CREATE TABLE guardians
 )ENGINE = InnoDB
  DEFAULT CHARSET = utf8mb4
  COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE leaders
+(
+    user_id BIGINT NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    phone_number VARCHAR(20) NOT NULL,
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+
+    CONSTRAINT pk_leaders PRIMARY KEY (user_id),
+
+    CONSTRAINT fk_leaders_user
+        FOREIGN KEY (user_id) REFERENCES users (id)
+            ON DELETE RESTRICT
+
+)ENGINE = InnoDB
+ DEFAULT CHARSET = utf8mb4
+ COLLATE = utf8mb4_0900_ai_ci;
