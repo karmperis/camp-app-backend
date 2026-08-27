@@ -133,3 +133,31 @@ CREATE TABLE leaders
 )ENGINE = InnoDB
  DEFAULT CHARSET = utf8mb4
  COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE campers
+(
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    gender VARCHAR(10) NOT NULL,
+    date_of_birth DATE NOT NULL,
+    street_name VARCHAR(200) NOT NULL,
+    street_number VARCHAR (10) NULL,
+    city VARCHAR (100) NOT NULL,
+    postal_code VARCHAR (20) NOT NULL,
+    country_code CHAR(2) NOT NULL,
+    parish VARCHAR (100) NULL,
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+    deleted_at DATETIME(6) NULL,
+
+    CONSTRAINT pk_campers PRIMARY KEY (id),
+    CONSTRAINT uk_campers_uuid UNIQUE (uuid),
+
+    CONSTRAINT chk_campers_gender
+        CHECK (gender IN ('MALE', 'FEMALE'))
+
+)ENGINE = InnoDB
+ DEFAULT CHARSET = utf8mb4
+ COLLATE = utf8mb4_0900_ai_ci;
