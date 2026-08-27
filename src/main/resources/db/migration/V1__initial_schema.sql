@@ -116,6 +116,7 @@ CREATE TABLE guardians
 CREATE TABLE leaders
 (
     user_id BIGINT NOT NULL,
+    uuid BINARY(16) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     phone_number VARCHAR(20) NOT NULL,
@@ -123,6 +124,7 @@ CREATE TABLE leaders
     updated_at DATETIME(6) NOT NULL,
 
     CONSTRAINT pk_leaders PRIMARY KEY (user_id),
+    CONSTRAINT uk_leaders_uuid UNIQUE (uuid),
 
     CONSTRAINT fk_leaders_user
         FOREIGN KEY (user_id) REFERENCES users (id)
