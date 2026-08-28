@@ -190,3 +190,19 @@ CREATE TABLE campers_guardians
 )ENGINE = InnoDB
  DEFAULT CHARSET = utf8mb4
  COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE school_grades
+(
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    grade VARCHAR(20) NOT NULL,
+    display_order SMALLINT UNSIGNED NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+
+    CONSTRAINT pk_school_grades PRIMARY KEY (id),
+    CONSTRAINT uk_school_grades_grade UNIQUE (grade),
+    CONSTRAINT uk_school_grades_display_order UNIQUE (display_order)
+
+)ENGINE = InnoDB
+ DEFAULT CHARSET = utf8mb4
+ COLLATE = utf8mb4_0900_ai_ci;
+
