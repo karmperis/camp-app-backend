@@ -206,3 +206,60 @@ CREATE TABLE school_grades
  DEFAULT CHARSET = utf8mb4
  COLLATE = utf8mb4_0900_ai_ci;
 
+CREATE TABLE camp_periods
+(
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    price_amount DECIMAL(10, 2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'EUR',
+    allowed_gender VARCHAR(10) NOT NULL,
+    min_school_grade_id BIGINT NOT NULL,
+    max_school_grade_id BIGINT NOT NULL,
+    max_capacity INT NOT NULL,
+    application_deadline DATETIME(6) NOT NULL,
+    status VARCHAR(10) NOT NULL,
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+    deleted_at DATETIME(6) NULL,
+
+    CONSTRAINT pk_camp_periods PRIMARY KEY (id),
+    CONSTRAINT uk_camp_periods_uuid UNIQUE (uuid),
+
+    CONSTRAINT chk_camp_periods_date_range
+        CHECK (start_date <= end_date),
+
+    CONSTRAINT chk_camp_periods_price_non_negative
+        CHECK (price_amount >= 0),
+
+    CONSTRAINT chk_camp_periods_currency
+        CHECK (currency = 'EUR'),
+
+    CONSTRAINT chk_camp_periods_allowed_gender
+        CHECK (allowed_gender IN ('MALE', 'FEMALE')),
+
+    CONSTRAINT fk_camp_periods_min_school_grade_id
+        FOREIGN KEY (min_school_grade_id) REFERENCES school_grades (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT fk_camp_periods_max_school_grade_id
+        FOREIGN KEY (max_school_grade_id) REFERENCES school_grades (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT chk_camp_periods_capacity_positive
+        CHECK (max_capacity > 0),
+
+    CONSTRAINT chk_camp_periods_status
+        CHECK (status IN ('DRAFT', 'OPEN', 'CLOSED')),
+
+    INDEX ix_camp_periods_minimum_school_grade_id
+        (min_school_grade_id),
+
+    INDEX ix_camp_periods_maximum_school_grade_id
+        (max_school_grade_id)
+
+)ENGINE = InnoDB
+        DEFAULT CHARSET = utf8mb4
+        COLLATE = utf8mb4_0900_ai_ci;
