@@ -162,3 +162,31 @@ CREATE TABLE campers
 )ENGINE = InnoDB
  DEFAULT CHARSET = utf8mb4
  COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE campers_guardians
+(
+    camper_id BIGINT NOT NULL,
+    guardian_id BIGINT NOT NULL,
+    guardian_role VARCHAR(10) NOT NULL,
+
+    CONSTRAINT pk_campers_guardians PRIMARY KEY (camper_id, guardian_id),
+
+    CONSTRAINT uk_campers_guardians_camper_role
+        UNIQUE (camper_id, guardian_role),
+
+    CONSTRAINT fk_campers_guardians_camper_id
+        FOREIGN KEY (camper_id) REFERENCES campers (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT fk_campers_guardians_guardian_id
+        FOREIGN KEY (guardian_id) REFERENCES guardians (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT chk_campers_guardians_role
+        CHECK (guardian_role IN ('PRIMARY', 'SECONDARY')),
+
+            INDEX ix_campers_guardians_guardian_id (guardian_id)
+
+)ENGINE = InnoDB
+ DEFAULT CHARSET = utf8mb4
+ COLLATE = utf8mb4_0900_ai_ci;
