@@ -283,3 +283,76 @@ CREATE TABLE camp_periods_leaders
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE applications
+(
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    camper_id BIGINT NOT NULL,
+    camp_period_id BIGINT NOT NULL,
+    applicant_guardian_id BIGINT NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
+    rejection_reason VARCHAR(500) NULL,
+    version BIGINT NOT NULL DEFAULT 0,
+    submitted_at DATETIME(6) NULL,
+    approved_at DATETIME(6) NULL,
+    payment_deadline DATETIME(6) NULL,
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+    deleted_at DATETIME(6) NULL,
+
+    CONSTRAINT pk_applications PRIMARY KEY (id),
+    CONSTRAINT uk_applications_uuid UNIQUE (uuid),
+
+    CONSTRAINT uk_applications_camper_period
+        UNIQUE (camper_id, camp_period_id),
+
+    CONSTRAINT fk_applications_camper
+        FOREIGN KEY (camper_id) REFERENCES campers (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT fk_applications_camp_period
+        FOREIGN KEY (camp_period_id) REFERENCES camp_periods (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT fk_applications_applicant_guardian_id
+        FOREIGN KEY (applicant_guardian_id) REFERENCES guardians (id)
+            ON DELETE RESTRICT,
+
+            CONSTRAINT chk_applications_status CHECK (
+            status IN (
+            'DRAFT',
+            'SUBMITTED',
+            'APPROVED_PENDING_PAYMENT',
+            'REJECTED',
+            'PAYMENT_EXPIRED',
+            'CONFIRMED',
+            'CANCELLED',
+            'REFUNDED'
+            )
+            ),
+
+    CONSTRAINT chk_applications_rejection_reason CHECK (
+        (
+            status = 'REJECTED'
+                AND rejection_reason IS NOT NULL
+                AND CHAR_LENGTH(TRIM(rejection_reason)) > 0
+            )
+            OR
+        (
+            status <> 'REJECTED'
+                AND rejection_reason IS NULL
+            )
+        ),
+
+    CONSTRAINT chk_applications_soft_delete_draft_only CHECK (
+        deleted_at IS NULL OR status = 'DRAFT'
+        ),
+
+    INDEX ix_applications_camp_period_status
+        (camp_period_id, status),
+    INDEX ix_applications_applicant_guardian_id (applicant_guardian_id)
+
+)ENGINE = InnoDB
+ DEFAULT CHARSET = utf8mb4
+ COLLATE = utf8mb4_0900_ai_ci;
