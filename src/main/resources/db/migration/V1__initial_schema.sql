@@ -356,3 +356,40 @@ CREATE TABLE applications
 )ENGINE = InnoDB
  DEFAULT CHARSET = utf8mb4
  COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE application_camper_snapshots
+(
+    application_id BIGINT NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    gender VARCHAR(10) NOT NULL,
+    date_of_birth DATE NOT NULL,
+    street_name VARCHAR(200) NOT NULL,
+    street_number VARCHAR(10) NULL,
+    city VARCHAR(100) NOT NULL,
+    postal_code VARCHAR(20) NOT NULL,
+    country_code CHAR(2) NOT NULL,
+    parish VARCHAR(100) NULL,
+    school_name VARCHAR(200) NULL,
+    completed_school_grade_id BIGINT NULL,
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+
+    CONSTRAINT pk_application_camper_snapshots PRIMARY KEY (application_id),
+
+    CONSTRAINT fk_application_camper_snapshots_application
+        FOREIGN KEY (application_id) REFERENCES applications (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT fk_application_camper_snapshots_completed_school_grade
+        FOREIGN KEY (completed_school_grade_id) REFERENCES school_grades (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT chk_application_camper_snapshots_gender
+        CHECK (gender IN ('MALE', 'FEMALE')),
+
+    INDEX ix_application_camper_snapshots_completed_school_grade (completed_school_grade_id)
+
+)ENGINE = InnoDB
+ DEFAULT CHARSET = utf8mb4
+ COLLATE = utf8mb4_0900_ai_ci;
