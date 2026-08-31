@@ -263,3 +263,23 @@ CREATE TABLE camp_periods
 )ENGINE = InnoDB
         DEFAULT CHARSET = utf8mb4
         COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE camp_periods_leaders
+(
+    camp_period_id BIGINT NOT NULL,
+    leader_user_id BIGINT NOT NULL,
+
+    CONSTRAINT pk_camp_periods_leaders PRIMARY KEY (camp_period_id, leader_user_id),
+
+    CONSTRAINT fk_camp_periods_leaders_camp_period
+        FOREIGN KEY (camp_period_id) REFERENCES camp_periods (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT fk_camp_periods_leaders_leader_user
+        FOREIGN KEY (leader_user_id) REFERENCES leaders (user_id)
+            ON DELETE CASCADE,
+
+    INDEX ix_camp_periods_leaders_leader_id (leader_user_id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
