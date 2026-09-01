@@ -411,3 +411,53 @@ CREATE TABLE application_camper_snapshots
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE application_guardian_snapshots
+(
+    application_id BIGINT NOT NULL,
+    guardian_id BIGINT NOT NULL,
+    guardian_role VARCHAR(10) NOT NULL,
+    relationship_to_camper VARCHAR(20) NOT NULL,
+    first_name      VARCHAR(100) NOT NULL,
+    last_name       VARCHAR(100) NOT NULL,
+    identity_number VARCHAR(20)  NOT NULL,
+    phone_number    VARCHAR(20)  NOT NULL,
+    email VARCHAR(255) NULL,
+    created_at      DATETIME(6)  NOT NULL,
+    updated_at      DATETIME(6)  NOT NULL,
+
+    CONSTRAINT pk_application_guardian_snapshots PRIMARY KEY (application_id, guardian_role),
+    CONSTRAINT uk_application_guardian_snapshots_application_guardian UNIQUE (application_id, guardian_id),
+
+    CONSTRAINT fk_application_guardian_snapshots_application_id
+        FOREIGN KEY (application_id) REFERENCES applications (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT fk_application_guardian_snapshots_guardian_id
+        FOREIGN KEY (guardian_id) REFERENCES guardians (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT chk_application_guardian_snapshots_role
+        CHECK (guardian_role IN ('PRIMARY', 'SECONDARY')),
+
+    CONSTRAINT chk_application_guardian_snapshots_relationship CHECK (
+        relationship_to_camper IN (
+                                   'FATHER',
+                                   'MOTHER',
+                                   'LEGAL_GUARDIAN'
+            )
+        ),
+
+    CONSTRAINT chk_application_guardian_snapshots_primary_email CHECK (
+        guardian_role <> 'PRIMARY'
+            OR (
+            email IS NOT NULL
+                AND CHAR_LENGTH(TRIM(email)) > 0
+            )
+        ),
+
+    INDEX ix_application_guardian_snapshots_guardian_id (guardian_id)
+
+)ENGINE = InnoDB
+ DEFAULT CHARSET = utf8mb4
+ COLLATE = utf8mb4_0900_ai_ci;
