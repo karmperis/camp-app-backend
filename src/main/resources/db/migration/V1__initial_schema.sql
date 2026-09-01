@@ -71,6 +71,10 @@ CREATE TABLE users
         FOREIGN KEY (role_id) REFERENCES roles (id)
             ON DELETE RESTRICT,
 
+    CONSTRAINT chk_users_active CHECK (
+        active IN (0, 1)
+        ),
+
     CONSTRAINT chk_users_deleted_not_active CHECK (
         deleted_at IS NULL OR active = 0
         ),
@@ -175,11 +179,11 @@ CREATE TABLE campers_guardians
     CONSTRAINT uk_campers_guardians_camper_role
         UNIQUE (camper_id, guardian_role),
 
-    CONSTRAINT fk_campers_guardians_camper_id
+    CONSTRAINT fk_campers_guardians_camper
         FOREIGN KEY (camper_id) REFERENCES campers (id)
             ON DELETE CASCADE,
 
-    CONSTRAINT fk_campers_guardians_guardian_id
+    CONSTRAINT fk_campers_guardians_guardian
         FOREIGN KEY (guardian_id) REFERENCES guardians (id)
             ON DELETE CASCADE,
 
@@ -209,7 +213,11 @@ CREATE TABLE school_grades
 
     CONSTRAINT pk_school_grades PRIMARY KEY (id),
     CONSTRAINT uk_school_grades_grade UNIQUE (grade),
-    CONSTRAINT uk_school_grades_display_order UNIQUE (display_order)
+    CONSTRAINT uk_school_grades_display_order UNIQUE (display_order),
+
+    CONSTRAINT chk_school_grades_active CHECK (
+        active IN (0, 1)
+        )
 
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -229,7 +237,7 @@ CREATE TABLE camp_periods
     max_school_grade_id  BIGINT         NOT NULL,
     max_capacity         INT            NOT NULL,
     application_deadline DATETIME(6)    NOT NULL,
-    status               VARCHAR(10)    NOT NULL,
+    status               VARCHAR(10)    NOT NULL DEFAULT 'DRAFT',
     created_at           DATETIME(6)    NOT NULL,
     updated_at           DATETIME(6)    NOT NULL,
     deleted_at           DATETIME(6)    NULL,
@@ -249,11 +257,11 @@ CREATE TABLE camp_periods
     CONSTRAINT chk_camp_periods_allowed_gender
         CHECK (allowed_gender IN ('MALE', 'FEMALE')),
 
-    CONSTRAINT fk_camp_periods_min_school_grade_id
+    CONSTRAINT fk_camp_periods_min_school_grade
         FOREIGN KEY (min_school_grade_id) REFERENCES school_grades (id)
             ON DELETE RESTRICT,
 
-    CONSTRAINT fk_camp_periods_max_school_grade_id
+    CONSTRAINT fk_camp_periods_max_school_grade
         FOREIGN KEY (max_school_grade_id) REFERENCES school_grades (id)
             ON DELETE RESTRICT,
 
@@ -263,10 +271,10 @@ CREATE TABLE camp_periods
     CONSTRAINT chk_camp_periods_status
         CHECK (status IN ('DRAFT', 'OPEN', 'CLOSED')),
 
-    INDEX ix_camp_periods_minimum_school_grade_id
+    INDEX ix_camp_periods_min_school_grade_id
         (min_school_grade_id),
 
-    INDEX ix_camp_periods_maximum_school_grade_id
+    INDEX ix_camp_periods_max_school_grade_id
         (max_school_grade_id)
 
 ) ENGINE = InnoDB
@@ -288,7 +296,7 @@ CREATE TABLE camp_periods_leaders
         FOREIGN KEY (leader_user_id) REFERENCES leaders (user_id)
             ON DELETE CASCADE,
 
-    INDEX ix_camp_periods_leaders_leader_id (leader_user_id)
+    INDEX ix_camp_periods_leaders_leader_user_id (leader_user_id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
@@ -414,26 +422,26 @@ CREATE TABLE application_camper_snapshots
 
 CREATE TABLE application_guardian_snapshots
 (
-    application_id BIGINT NOT NULL,
-    guardian_id BIGINT NOT NULL,
-    guardian_role VARCHAR(10) NOT NULL,
-    relationship_to_camper VARCHAR(20) NOT NULL,
-    first_name      VARCHAR(100) NOT NULL,
-    last_name       VARCHAR(100) NOT NULL,
-    identity_number VARCHAR(20)  NOT NULL,
-    phone_number    VARCHAR(20)  NOT NULL,
-    email VARCHAR(255) NULL,
-    created_at      DATETIME(6)  NOT NULL,
-    updated_at      DATETIME(6)  NOT NULL,
+    application_id         BIGINT       NOT NULL,
+    guardian_id            BIGINT       NOT NULL,
+    guardian_role          VARCHAR(10)  NOT NULL,
+    relationship_to_camper VARCHAR(20)  NOT NULL,
+    first_name             VARCHAR(100) NOT NULL,
+    last_name              VARCHAR(100) NOT NULL,
+    identity_number        VARCHAR(20)  NOT NULL,
+    phone_number           VARCHAR(20)  NOT NULL,
+    email                  VARCHAR(255) NULL,
+    created_at             DATETIME(6)  NOT NULL,
+    updated_at             DATETIME(6)  NOT NULL,
 
     CONSTRAINT pk_application_guardian_snapshots PRIMARY KEY (application_id, guardian_role),
     CONSTRAINT uk_application_guardian_snapshots_application_guardian UNIQUE (application_id, guardian_id),
 
-    CONSTRAINT fk_application_guardian_snapshots_application_id
+    CONSTRAINT fk_application_guardian_snapshots_application
         FOREIGN KEY (application_id) REFERENCES applications (id)
             ON DELETE CASCADE,
 
-    CONSTRAINT fk_application_guardian_snapshots_guardian_id
+    CONSTRAINT fk_application_guardian_snapshots_guardian
         FOREIGN KEY (guardian_id) REFERENCES guardians (id)
             ON DELETE RESTRICT,
 
@@ -458,6 +466,6 @@ CREATE TABLE application_guardian_snapshots
 
     INDEX ix_application_guardian_snapshots_guardian_id (guardian_id)
 
-)ENGINE = InnoDB
- DEFAULT CHARSET = utf8mb4
- COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
