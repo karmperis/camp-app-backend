@@ -300,6 +300,7 @@ CREATE TABLE applications
     camper_id             BIGINT       NOT NULL,
     camp_period_id        BIGINT       NOT NULL,
     applicant_guardian_id BIGINT       NOT NULL,
+    joint_custody         TINYINT(1)   NULL,
     status                VARCHAR(50)  NOT NULL DEFAULT 'DRAFT',
     rejection_reason      VARCHAR(500) NULL,
     version               BIGINT       NOT NULL DEFAULT 0,
@@ -313,6 +314,14 @@ CREATE TABLE applications
     CONSTRAINT pk_applications PRIMARY KEY (id),
     CONSTRAINT uk_applications_uuid UNIQUE (uuid),
 
+    CONSTRAINT chk_applications_joint_custody_value CHECK (
+        joint_custody IS NULL OR joint_custody IN (0, 1)
+        ),
+
+    CONSTRAINT chk_applications_joint_custody_required CHECK (
+        status = 'DRAFT' OR joint_custody IS NOT NULL
+        ),
+
     CONSTRAINT uk_applications_camper_period
         UNIQUE (camper_id, camp_period_id),
 
@@ -324,7 +333,7 @@ CREATE TABLE applications
         FOREIGN KEY (camp_period_id) REFERENCES camp_periods (id)
             ON DELETE RESTRICT,
 
-    CONSTRAINT fk_applications_applicant_guardian_id
+    CONSTRAINT fk_applications_applicant_guardian
         FOREIGN KEY (applicant_guardian_id) REFERENCES guardians (id)
             ON DELETE RESTRICT,
 
