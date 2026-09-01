@@ -165,9 +165,10 @@ CREATE TABLE campers
 
 CREATE TABLE campers_guardians
 (
-    camper_id BIGINT NOT NULL,
-    guardian_id BIGINT NOT NULL,
-    guardian_role VARCHAR(10) NOT NULL,
+    camper_id              BIGINT      NOT NULL,
+    guardian_id            BIGINT      NOT NULL,
+    guardian_role          VARCHAR(10) NOT NULL,
+    relationship_to_camper VARCHAR(20) NOT NULL,
 
     CONSTRAINT pk_campers_guardians PRIMARY KEY (camper_id, guardian_id),
 
@@ -185,7 +186,15 @@ CREATE TABLE campers_guardians
     CONSTRAINT chk_campers_guardians_role
         CHECK (guardian_role IN ('PRIMARY', 'SECONDARY')),
 
-            INDEX ix_campers_guardians_guardian_id (guardian_id)
+    CONSTRAINT chk_campers_guardians_relationship CHECK (
+        relationship_to_camper IN (
+                                   'FATHER',
+                                   'MOTHER',
+                                   'LEGAL_GUARDIAN'
+            )
+        ),
+
+    INDEX ix_campers_guardians_guardian_id (guardian_id)
 
 )ENGINE = InnoDB
  DEFAULT CHARSET = utf8mb4
