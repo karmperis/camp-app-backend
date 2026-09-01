@@ -10,7 +10,7 @@ Tables for authentication (users) and authorization (roles, capabilities).
 
 CREATE TABLE roles
 (
-    id BIGINT NOT NULL AUTO_INCREMENT,
+    id   BIGINT      NOT NULL AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
 
     CONSTRAINT pk_roles PRIMARY KEY (id),
@@ -21,8 +21,8 @@ CREATE TABLE roles
 
 CREATE TABLE capabilities
 (
-    id BIGINT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
+    id          BIGINT       NOT NULL AUTO_INCREMENT,
+    name        VARCHAR(100) NOT NULL,
     description VARCHAR(255) NULL,
 
     CONSTRAINT pk_capabilities PRIMARY KEY (id),
@@ -33,7 +33,7 @@ CREATE TABLE capabilities
 
 CREATE TABLE roles_capabilities
 (
-    role_id BIGINT NOT NULL,
+    role_id       BIGINT NOT NULL,
     capability_id BIGINT NOT NULL,
 
     CONSTRAINT pk_roles_capabilities PRIMARY KEY (role_id, capability_id),
@@ -53,15 +53,15 @@ CREATE TABLE roles_capabilities
 
 CREATE TABLE users
 (
-    id BIGINT NOT NULL AUTO_INCREMENT,
-    uuid BINARY(16) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    role_id BIGINT NOT NULL,
-    active TINYINT(1) NOT NULL DEFAULT 1,
-    created_at DATETIME(6) NOT NULL,
-    updated_at DATETIME(6) NOT NULL,
-    deleted_at DATETIME(6) NULL,
+    id         BIGINT       NOT NULL AUTO_INCREMENT,
+    uuid       BINARY(16)   NOT NULL,
+    email      VARCHAR(255) NOT NULL,
+    password   VARCHAR(255) NOT NULL,
+    role_id    BIGINT       NOT NULL,
+    active     TINYINT(1)   NOT NULL DEFAULT 1,
+    created_at DATETIME(6)  NOT NULL,
+    updated_at DATETIME(6)  NOT NULL,
+    deleted_at DATETIME(6)  NULL,
 
     CONSTRAINT pk_users PRIMARY KEY (id),
     CONSTRAINT uk_users_uuid UNIQUE (uuid),
@@ -90,16 +90,16 @@ Tables for business logic.
 
 CREATE TABLE guardians
 (
-    id BIGINT NOT NULL AUTO_INCREMENT,
-    user_id BIGINT NULL,
-    uuid BINARY(16) NOT NULL,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    identity_number VARCHAR(20) NOT NULL,
-    phone_number VARCHAR(20) NOT NULL,
-    created_at DATETIME(6) NOT NULL,
-    updated_at DATETIME(6) NOT NULL,
-    deleted_at DATETIME(6) NULL,
+    id              BIGINT       NOT NULL AUTO_INCREMENT,
+    user_id         BIGINT       NULL,
+    uuid            BINARY(16)   NOT NULL,
+    first_name      VARCHAR(100) NOT NULL,
+    last_name       VARCHAR(100) NOT NULL,
+    identity_number VARCHAR(20)  NOT NULL,
+    phone_number    VARCHAR(20)  NOT NULL,
+    created_at      DATETIME(6)  NOT NULL,
+    updated_at      DATETIME(6)  NOT NULL,
+    deleted_at      DATETIME(6)  NULL,
 
     CONSTRAINT pk_guardians PRIMARY KEY (id),
     CONSTRAINT uk_guardians_user_id UNIQUE (user_id),
@@ -110,19 +110,19 @@ CREATE TABLE guardians
         FOREIGN KEY (user_id) REFERENCES users (id)
             ON DELETE RESTRICT
 
-)ENGINE = InnoDB
- DEFAULT CHARSET = utf8mb4
- COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
 
 CREATE TABLE leaders
 (
-    user_id BIGINT NOT NULL,
-    uuid BINARY(16) NOT NULL,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    phone_number VARCHAR(20) NOT NULL,
-    created_at DATETIME(6) NOT NULL,
-    updated_at DATETIME(6) NOT NULL,
+    user_id      BIGINT       NOT NULL,
+    uuid         BINARY(16)   NOT NULL,
+    first_name   VARCHAR(100) NOT NULL,
+    last_name    VARCHAR(100) NOT NULL,
+    phone_number VARCHAR(20)  NOT NULL,
+    created_at   DATETIME(6)  NOT NULL,
+    updated_at   DATETIME(6)  NOT NULL,
 
     CONSTRAINT pk_leaders PRIMARY KEY (user_id),
     CONSTRAINT uk_leaders_uuid UNIQUE (uuid),
@@ -131,27 +131,27 @@ CREATE TABLE leaders
         FOREIGN KEY (user_id) REFERENCES users (id)
             ON DELETE RESTRICT
 
-)ENGINE = InnoDB
- DEFAULT CHARSET = utf8mb4
- COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
 
 CREATE TABLE campers
 (
-    id BIGINT NOT NULL AUTO_INCREMENT,
-    uuid BINARY(16) NOT NULL,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    gender VARCHAR(10) NOT NULL,
-    date_of_birth DATE NOT NULL,
-    street_name VARCHAR(200) NOT NULL,
-    street_number VARCHAR(10) NULL,
-    city VARCHAR(100) NOT NULL,
-    postal_code VARCHAR(20) NOT NULL,
-    country_code CHAR(2) NOT NULL,
-    parish VARCHAR(100) NULL,
-    created_at DATETIME(6) NOT NULL,
-    updated_at DATETIME(6) NOT NULL,
-    deleted_at DATETIME(6) NULL,
+    id            BIGINT       NOT NULL AUTO_INCREMENT,
+    uuid          BINARY(16)   NOT NULL,
+    first_name    VARCHAR(100) NOT NULL,
+    last_name     VARCHAR(100) NOT NULL,
+    gender        VARCHAR(10)  NOT NULL,
+    date_of_birth DATE         NOT NULL,
+    street_name   VARCHAR(200) NOT NULL,
+    street_number VARCHAR(10)  NULL,
+    city          VARCHAR(100) NOT NULL,
+    postal_code   VARCHAR(20)  NOT NULL,
+    country_code  CHAR(2)      NOT NULL,
+    parish        VARCHAR(100) NULL,
+    created_at    DATETIME(6)  NOT NULL,
+    updated_at    DATETIME(6)  NOT NULL,
+    deleted_at    DATETIME(6)  NULL,
 
     CONSTRAINT pk_campers PRIMARY KEY (id),
     CONSTRAINT uk_campers_uuid UNIQUE (uuid),
@@ -159,9 +159,9 @@ CREATE TABLE campers
     CONSTRAINT chk_campers_gender
         CHECK (gender IN ('MALE', 'FEMALE'))
 
-)ENGINE = InnoDB
- DEFAULT CHARSET = utf8mb4
- COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
 
 CREATE TABLE campers_guardians
 (
@@ -196,43 +196,43 @@ CREATE TABLE campers_guardians
 
     INDEX ix_campers_guardians_guardian_id (guardian_id)
 
-)ENGINE = InnoDB
- DEFAULT CHARSET = utf8mb4
- COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
 
 CREATE TABLE school_grades
 (
-    id BIGINT NOT NULL AUTO_INCREMENT,
-    grade VARCHAR(20) NOT NULL,
+    id            BIGINT            NOT NULL AUTO_INCREMENT,
+    grade         VARCHAR(20)       NOT NULL,
     display_order SMALLINT UNSIGNED NOT NULL,
-    active TINYINT(1) NOT NULL DEFAULT 1,
+    active        TINYINT(1)        NOT NULL DEFAULT 1,
 
     CONSTRAINT pk_school_grades PRIMARY KEY (id),
     CONSTRAINT uk_school_grades_grade UNIQUE (grade),
     CONSTRAINT uk_school_grades_display_order UNIQUE (display_order)
 
-)ENGINE = InnoDB
- DEFAULT CHARSET = utf8mb4
- COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
 
 CREATE TABLE camp_periods
 (
-    id BIGINT NOT NULL AUTO_INCREMENT,
-    uuid BINARY(16) NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    price_amount DECIMAL(10, 2) NOT NULL,
-    currency CHAR(3) NOT NULL DEFAULT 'EUR',
-    allowed_gender VARCHAR(10) NOT NULL,
-    min_school_grade_id BIGINT NOT NULL,
-    max_school_grade_id BIGINT NOT NULL,
-    max_capacity INT NOT NULL,
-    application_deadline DATETIME(6) NOT NULL,
-    status VARCHAR(10) NOT NULL,
-    created_at DATETIME(6) NOT NULL,
-    updated_at DATETIME(6) NOT NULL,
-    deleted_at DATETIME(6) NULL,
+    id                   BIGINT         NOT NULL AUTO_INCREMENT,
+    uuid                 BINARY(16)     NOT NULL,
+    name                 VARCHAR(100)   NOT NULL,
+    start_date           DATE           NOT NULL,
+    end_date             DATE           NOT NULL,
+    price_amount         DECIMAL(10, 2) NOT NULL,
+    currency             CHAR(3)        NOT NULL DEFAULT 'EUR',
+    allowed_gender       VARCHAR(10)    NOT NULL,
+    min_school_grade_id  BIGINT         NOT NULL,
+    max_school_grade_id  BIGINT         NOT NULL,
+    max_capacity         INT            NOT NULL,
+    application_deadline DATETIME(6)    NOT NULL,
+    status               VARCHAR(10)    NOT NULL,
+    created_at           DATETIME(6)    NOT NULL,
+    updated_at           DATETIME(6)    NOT NULL,
+    deleted_at           DATETIME(6)    NULL,
 
     CONSTRAINT pk_camp_periods PRIMARY KEY (id),
     CONSTRAINT uk_camp_periods_uuid UNIQUE (uuid),
@@ -269,9 +269,9 @@ CREATE TABLE camp_periods
     INDEX ix_camp_periods_maximum_school_grade_id
         (max_school_grade_id)
 
-)ENGINE = InnoDB
-        DEFAULT CHARSET = utf8mb4
-        COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
 
 CREATE TABLE camp_periods_leaders
 (
@@ -295,20 +295,20 @@ CREATE TABLE camp_periods_leaders
 
 CREATE TABLE applications
 (
-    id BIGINT NOT NULL AUTO_INCREMENT,
-    uuid BINARY(16) NOT NULL,
-    camper_id BIGINT NOT NULL,
-    camp_period_id BIGINT NOT NULL,
-    applicant_guardian_id BIGINT NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
-    rejection_reason VARCHAR(500) NULL,
-    version BIGINT NOT NULL DEFAULT 0,
-    submitted_at DATETIME(6) NULL,
-    approved_at DATETIME(6) NULL,
-    payment_deadline DATETIME(6) NULL,
-    created_at DATETIME(6) NOT NULL,
-    updated_at DATETIME(6) NOT NULL,
-    deleted_at DATETIME(6) NULL,
+    id                    BIGINT       NOT NULL AUTO_INCREMENT,
+    uuid                  BINARY(16)   NOT NULL,
+    camper_id             BIGINT       NOT NULL,
+    camp_period_id        BIGINT       NOT NULL,
+    applicant_guardian_id BIGINT       NOT NULL,
+    status                VARCHAR(50)  NOT NULL DEFAULT 'DRAFT',
+    rejection_reason      VARCHAR(500) NULL,
+    version               BIGINT       NOT NULL DEFAULT 0,
+    submitted_at          DATETIME(6)  NULL,
+    approved_at           DATETIME(6)  NULL,
+    payment_deadline      DATETIME(6)  NULL,
+    created_at            DATETIME(6)  NOT NULL,
+    updated_at            DATETIME(6)  NOT NULL,
+    deleted_at            DATETIME(6)  NULL,
 
     CONSTRAINT pk_applications PRIMARY KEY (id),
     CONSTRAINT uk_applications_uuid UNIQUE (uuid),
@@ -328,18 +328,18 @@ CREATE TABLE applications
         FOREIGN KEY (applicant_guardian_id) REFERENCES guardians (id)
             ON DELETE RESTRICT,
 
-            CONSTRAINT chk_applications_status CHECK (
-            status IN (
-            'DRAFT',
-            'SUBMITTED',
-            'APPROVED_PENDING_PAYMENT',
-            'REJECTED',
-            'PAYMENT_EXPIRED',
-            'CONFIRMED',
-            'CANCELLED',
-            'REFUNDED'
+    CONSTRAINT chk_applications_status CHECK (
+        status IN (
+                   'DRAFT',
+                   'SUBMITTED',
+                   'APPROVED_PENDING_PAYMENT',
+                   'REJECTED',
+                   'PAYMENT_EXPIRED',
+                   'CONFIRMED',
+                   'CANCELLED',
+                   'REFUNDED'
             )
-            ),
+        ),
 
     CONSTRAINT chk_applications_rejection_reason CHECK (
         (
@@ -362,27 +362,27 @@ CREATE TABLE applications
         (camp_period_id, status),
     INDEX ix_applications_applicant_guardian_id (applicant_guardian_id)
 
-)ENGINE = InnoDB
- DEFAULT CHARSET = utf8mb4
- COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
 
 CREATE TABLE application_camper_snapshots
 (
-    application_id BIGINT NOT NULL,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    gender VARCHAR(10) NOT NULL,
-    date_of_birth DATE NOT NULL,
-    street_name VARCHAR(200) NOT NULL,
-    street_number VARCHAR(10) NULL,
-    city VARCHAR(100) NOT NULL,
-    postal_code VARCHAR(20) NOT NULL,
-    country_code CHAR(2) NOT NULL,
-    parish VARCHAR(100) NULL,
-    school_name VARCHAR(200) NULL,
-    completed_school_grade_id BIGINT NULL,
-    created_at DATETIME(6) NOT NULL,
-    updated_at DATETIME(6) NOT NULL,
+    application_id            BIGINT       NOT NULL,
+    first_name                VARCHAR(100) NOT NULL,
+    last_name                 VARCHAR(100) NOT NULL,
+    gender                    VARCHAR(10)  NOT NULL,
+    date_of_birth             DATE         NOT NULL,
+    street_name               VARCHAR(200) NOT NULL,
+    street_number             VARCHAR(10)  NULL,
+    city                      VARCHAR(100) NOT NULL,
+    postal_code               VARCHAR(20)  NOT NULL,
+    country_code              CHAR(2)      NOT NULL,
+    parish                    VARCHAR(100) NULL,
+    school_name               VARCHAR(200) NULL,
+    completed_school_grade_id BIGINT       NULL,
+    created_at                DATETIME(6)  NOT NULL,
+    updated_at                DATETIME(6)  NOT NULL,
 
     CONSTRAINT pk_application_camper_snapshots PRIMARY KEY (application_id),
 
@@ -399,6 +399,6 @@ CREATE TABLE application_camper_snapshots
 
     INDEX ix_application_camper_snapshots_completed_school_grade (completed_school_grade_id)
 
-)ENGINE = InnoDB
- DEFAULT CHARSET = utf8mb4
- COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
