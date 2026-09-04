@@ -456,11 +456,16 @@ CREATE TABLE application_guardian_snapshots
             )
         ),
 
-    CONSTRAINT chk_application_guardian_snapshots_primary_email CHECK (
-        guardian_role <> 'PRIMARY'
-            OR (
+    CONSTRAINT chk_application_guardian_snapshots_primary_email_by_role CHECK (
+        guardian_role = 'PRIMARY'
+            AND (
             email IS NOT NULL
                 AND CHAR_LENGTH(TRIM(email)) > 0
+            )
+            OR
+        (
+            guardian_role = 'SECONDARY'
+                AND email IS NULL
             )
         ),
 
