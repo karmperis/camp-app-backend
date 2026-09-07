@@ -503,3 +503,53 @@ CREATE TABLE application_signatures
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE application_pricing
+(
+    application_id     BIGINT         NOT NULL,
+    base_price_amount  DECIMAL(10, 2) NOT NULL,
+    discount_amount    DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    final_price_amount DECIMAL(10, 2) NOT NULL,
+    currency           CHAR(3)        NOT NULL,
+    discount_code      VARCHAR(50)    NULL,
+    calculated_at      DATETIME(6)    NOT NULL,
+    created_at         DATETIME(6)    NOT NULL,
+    updated_at         DATETIME(6)    NOT NULL,
+
+    CONSTRAINT pk_application_pricing PRIMARY KEY (application_id),
+
+    CONSTRAINT fk_application_pricing_application
+        FOREIGN KEY (application_id)
+            REFERENCES applications (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT chk_application_pricing_base_price_amount CHECK (base_price_amount >= 0),
+
+    CONSTRAINT chk_application_pricing_discount_amount CHECK
+        (
+        discount_amount >= 0
+            AND
+        discount_amount <= base_price_amount
+        ),
+
+    CONSTRAINT chk_application_pricing_final_price_amount CHECK
+        (final_price_amount = base_price_amount - discount_amount),
+
+    CONSTRAINT chk_application_pricing_currency CHECK (currency = 'EUR'),
+
+    CONSTRAINT chk_application_pricing_discount_code CHECK (
+        (
+            discount_amount = 0
+                AND discount_code IS NULL
+            )
+            OR
+        (
+            discount_amount > 0
+                AND discount_code IS NOT NULL
+                AND CHAR_LENGTH(TRIM(discount_code)) > 0
+            )
+        )
+
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
