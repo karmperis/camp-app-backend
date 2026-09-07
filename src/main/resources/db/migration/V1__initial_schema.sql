@@ -474,3 +474,32 @@ CREATE TABLE application_guardian_snapshots
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE application_signatures
+(
+    application_id      BIGINT          NOT NULL,
+    guardian_role       VARCHAR(10)     NOT NULL,
+    storage_key         VARCHAR(512)    NOT NULL,
+    mime_type           VARCHAR(100)    NOT NULL,
+    file_size_bytes     BIGINT UNSIGNED NOT NULL,
+    checksum_hash       BINARY(32)      NOT NULL,
+    signed_payload_hash BINARY(32)      NOT NULL,
+    signed_at           DATETIME(6)     NOT NULL,
+    created_at          DATETIME(6)     NOT NULL,
+    updated_at          DATETIME(6)     NOT NULL,
+
+    CONSTRAINT pk_application_signatures PRIMARY KEY (application_id, guardian_role),
+
+    CONSTRAINT fk_application_signatures_application_guardian_snapshot
+        FOREIGN KEY (application_id, guardian_role)
+            REFERENCES application_guardian_snapshots (application_id, guardian_role)
+            ON DELETE CASCADE,
+
+    CONSTRAINT uk_application_signatures_storage_key UNIQUE (storage_key),
+
+    CONSTRAINT chk_application_signatures_mime_type CHECK (mime_type = 'image/png'),
+
+    CONSTRAINT chk_application_signatures_file_size CHECK (file_size_bytes > 0)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
