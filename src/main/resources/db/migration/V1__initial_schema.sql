@@ -662,3 +662,28 @@ CREATE TABLE application_status_history
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
 
+CREATE TABLE application_friend_preferences
+(
+    application_id   BIGINT           NOT NULL,
+    preference_order TINYINT UNSIGNED NOT NULL,
+    friend_full_name VARCHAR(200)     NOT NULL,
+    created_at       DATETIME(6)      NOT NULL,
+    updated_at       DATETIME(6)      NOT NULL,
+
+    CONSTRAINT pk_application_friend_preferences
+        PRIMARY KEY (application_id, preference_order),
+
+    CONSTRAINT fk_application_friend_preferences_application
+        FOREIGN KEY (application_id)
+            REFERENCES applications (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT chk_application_friend_preferences_order
+        CHECK (preference_order BETWEEN 1 AND 3),
+
+    CONSTRAINT chk_application_friend_preferences_name_not_blank
+        CHECK (CHAR_LENGTH(TRIM(friend_full_name)) > 0)
+
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
