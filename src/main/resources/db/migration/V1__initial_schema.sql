@@ -687,3 +687,109 @@ CREATE TABLE application_friend_preferences
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE application_medical_questionnaires
+(
+    application_id                   BIGINT        NOT NULL,
+    checked_for_head_lice            TINYINT(1)    NULL,
+    has_sleepwalking_history         TINYINT(1)    NULL,
+    has_self_care_difficulties       TINYINT(1)    NULL,
+    self_care_difficulties_details   VARCHAR(1000) NULL,
+    has_allergies                    TINYINT(1)    NULL,
+    allergies_details                VARCHAR(1000) NULL,
+    has_anxiety_history              TINYINT(1)    NULL,
+    anxiety_details                  VARCHAR(1000) NULL,
+    has_behavioral_issues_history    TINYINT(1)    NULL,
+    behavioral_issues_details        VARCHAR(1000) NULL,
+    has_previous_camp_experience     TINYINT(1)    NULL,
+    previous_camp_experience_details VARCHAR(1000) NULL,
+    additional_information           VARCHAR(2000) NULL,
+    created_at                       DATETIME(6)   NOT NULL,
+    updated_at                       DATETIME(6)   NOT NULL,
+
+    CONSTRAINT pk_application_medical_questionnaires
+        PRIMARY KEY (application_id),
+
+    CONSTRAINT fk_application_medical_questionnaires_application
+        FOREIGN KEY (application_id)
+            REFERENCES applications (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT chk_application_medical_questionnaires_head_lice_value CHECK (
+        checked_for_head_lice IS NULL
+            OR checked_for_head_lice IN (0, 1)
+        ),
+
+    CONSTRAINT chk_application_medical_questionnaires_sleepwalking_value CHECK (
+        has_sleepwalking_history IS NULL
+            OR has_sleepwalking_history IN (0, 1)
+        ),
+
+    CONSTRAINT chk_application_medical_questionnaires_self_care_difficulties CHECK (
+        (
+            has_self_care_difficulties = 1
+                AND self_care_difficulties_details IS NOT NULL
+                AND CHAR_LENGTH(TRIM(self_care_difficulties_details)) > 0
+            )
+            OR
+        (
+            (has_self_care_difficulties = 0 OR has_self_care_difficulties IS NULL)
+                AND self_care_difficulties_details IS NULL
+            )
+        ),
+
+    CONSTRAINT chk_application_medical_questionnaires_allergies CHECK (
+        (
+            has_allergies = 1
+                AND allergies_details IS NOT NULL
+                AND CHAR_LENGTH(TRIM(allergies_details)) > 0
+            )
+            OR
+        (
+            (has_allergies = 0 OR has_allergies IS NULL)
+                AND allergies_details IS NULL
+            )
+        ),
+
+    CONSTRAINT chk_application_medical_questionnaires_anxiety_history CHECK (
+        (
+            has_anxiety_history = 1
+                AND anxiety_details IS NOT NULL
+                AND CHAR_LENGTH(TRIM(anxiety_details)) > 0
+            )
+            OR
+        (
+            (has_anxiety_history = 0 OR has_anxiety_history IS NULL)
+                AND anxiety_details IS NULL
+            )
+        ),
+
+    CONSTRAINT chk_application_medical_questionnaires_behavioral_issues_history CHECK (
+        (
+            has_behavioral_issues_history = 1
+                AND behavioral_issues_details IS NOT NULL
+                AND CHAR_LENGTH(TRIM(behavioral_issues_details)) > 0
+            )
+            OR
+        (
+            (has_behavioral_issues_history = 0 OR has_behavioral_issues_history IS NULL)
+                AND behavioral_issues_details IS NULL
+            )
+        ),
+
+    CONSTRAINT chk_application_medical_questionnaires_previous_camp_experience CHECK (
+        (
+            has_previous_camp_experience = 1
+                AND previous_camp_experience_details IS NOT NULL
+                AND CHAR_LENGTH(TRIM(previous_camp_experience_details)) > 0
+            )
+            OR
+        (
+            (has_previous_camp_experience = 0 OR has_previous_camp_experience IS NULL)
+                AND previous_camp_experience_details IS NULL
+            )
+        )
+
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
