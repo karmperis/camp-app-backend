@@ -553,3 +553,100 @@ CREATE TABLE application_pricing
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE application_status_history
+(
+    id             BIGINT       NOT NULL AUTO_INCREMENT,
+    application_id BIGINT       NOT NULL,
+    from_status    VARCHAR(50)  NULL,
+    to_status      VARCHAR(50)  NOT NULL,
+    actor_type     VARCHAR(20)  NOT NULL,
+    actor_user_id  BIGINT       NULL,
+    reason         VARCHAR(500) NULL,
+    changed_at     DATETIME(6)  NOT NULL,
+
+    CONSTRAINT pk_application_status_history PRIMARY KEY (id),
+
+    CONSTRAINT fk_application_status_history_application
+        FOREIGN KEY (application_id)
+            REFERENCES applications (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT chk_application_status_history_from_status CHECK (
+        from_status IS NULL
+            OR from_status IN (
+                               'DRAFT',
+                               'SUBMITTED',
+                               'APPROVED_PENDING_PAYMENT',
+                               'REJECTED',
+                               'PAYMENT_EXPIRED',
+                               'CONFIRMED',
+                               'CANCELLED',
+                               'REFUNDED'
+            )
+        ),
+
+    CONSTRAINT chk_application_status_history_to_status CHECK (
+        to_status IN (
+                      'DRAFT',
+                      'SUBMITTED',
+                      'APPROVED_PENDING_PAYMENT',
+                      'REJECTED',
+                      'PAYMENT_EXPIRED',
+                      'CONFIRMED',
+                      'CANCELLED',
+                      'REFUNDED'
+            )
+        ),
+
+    CONSTRAINT chk_application_status_history_initial_status CHECK (
+        from_status IS NOT NULL OR to_status = 'DRAFT'
+        ),
+
+    CONSTRAINT chk_application_status_history_status_changed CHECK (
+        from_status IS NULL OR from_status <> to_status
+        ),
+
+    CONSTRAINT chk_application_status_history_actor_type CHECK (
+        actor_type IN (
+                       'GUARDIAN',
+                       'ADMIN',
+                       'SYSTEM',
+                       'STRIPE'
+            )
+        ),
+
+    CONSTRAINT chk_application_status_history_actor_user CHECK (
+        (
+            actor_type IN ('GUARDIAN', 'ADMIN')
+                AND actor_user_id IS NOT NULL
+            )
+            OR
+        (
+            actor_type IN ('SYSTEM', 'STRIPE')
+                AND actor_user_id IS NULL
+            )
+        ),
+
+    CONSTRAINT fk_application_status_history_actor_user
+        FOREIGN KEY (actor_user_id)
+            REFERENCES users (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT chk_application_status_history_rejection_reason CHECK (
+        to_status <> 'REJECTED'
+            OR (
+            reason IS NOT NULL
+                AND CHAR_LENGTH(TRIM(reason)) > 0
+            )
+        ),
+
+    INDEX ix_application_status_history_application_changed_at
+        (application_id, changed_at),
+
+    INDEX ix_application_status_history_actor_user_id
+        (actor_user_id)
+
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
