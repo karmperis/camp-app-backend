@@ -303,21 +303,22 @@ CREATE TABLE camp_periods_leaders
 
 CREATE TABLE applications
 (
-    id                    BIGINT       NOT NULL AUTO_INCREMENT,
-    uuid                  BINARY(16)   NOT NULL,
-    camper_id             BIGINT       NOT NULL,
-    camp_period_id        BIGINT       NOT NULL,
-    applicant_guardian_id BIGINT       NOT NULL,
-    joint_custody         TINYINT(1)   NULL,
-    status                VARCHAR(50)  NOT NULL DEFAULT 'DRAFT',
-    rejection_reason      VARCHAR(500) NULL,
-    version               BIGINT       NOT NULL DEFAULT 0,
-    submitted_at          DATETIME(6)  NULL,
-    approved_at           DATETIME(6)  NULL,
-    payment_deadline      DATETIME(6)  NULL,
-    created_at            DATETIME(6)  NOT NULL,
-    updated_at            DATETIME(6)  NOT NULL,
-    deleted_at            DATETIME(6)  NULL,
+    id                     BIGINT       NOT NULL AUTO_INCREMENT,
+    uuid                   BINARY(16)   NOT NULL,
+    camper_id              BIGINT       NOT NULL,
+    camp_period_id         BIGINT       NOT NULL,
+    applicant_guardian_id  BIGINT       NOT NULL,
+    joint_custody          TINYINT(1)   NULL,
+    wants_friend_placement TINYINT(1)   NULL,
+    status                 VARCHAR(50)  NOT NULL DEFAULT 'DRAFT',
+    rejection_reason       VARCHAR(500) NULL,
+    version                BIGINT       NOT NULL DEFAULT 0,
+    submitted_at           DATETIME(6)  NULL,
+    approved_at            DATETIME(6)  NULL,
+    payment_deadline       DATETIME(6)  NULL,
+    created_at             DATETIME(6)  NOT NULL,
+    updated_at             DATETIME(6)  NOT NULL,
+    deleted_at             DATETIME(6)  NULL,
 
     CONSTRAINT pk_applications PRIMARY KEY (id),
     CONSTRAINT uk_applications_uuid UNIQUE (uuid),
@@ -328,6 +329,16 @@ CREATE TABLE applications
 
     CONSTRAINT chk_applications_joint_custody_required CHECK (
         status = 'DRAFT' OR joint_custody IS NOT NULL
+        ),
+
+    CONSTRAINT chk_applications_wants_friend_placement_value CHECK (
+        wants_friend_placement IS NULL
+            OR wants_friend_placement IN (0, 1)
+        ),
+
+    CONSTRAINT chk_applications_wants_friend_placement_required CHECK (
+        status = 'DRAFT'
+            OR wants_friend_placement IS NOT NULL
         ),
 
     CONSTRAINT uk_applications_camper_period
@@ -650,3 +661,4 @@ CREATE TABLE application_status_history
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
