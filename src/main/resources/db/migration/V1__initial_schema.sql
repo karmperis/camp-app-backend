@@ -793,3 +793,42 @@ CREATE TABLE application_medical_questionnaires
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE attachments
+(
+    id              BIGINT          NOT NULL AUTO_INCREMENT,
+    uuid            BINARY(16)      NOT NULL,
+    application_id  BIGINT          NOT NULL,
+    attachment_type VARCHAR(50)     NOT NULL,
+    filename        VARCHAR(255)    NOT NULL,
+    storage_key     VARCHAR(512)    NOT NULL,
+    mime_type       VARCHAR(100)    NOT NULL,
+    file_size_bytes BIGINT UNSIGNED NOT NULL,
+    checksum_hash   BINARY(32)      NOT NULL,
+    created_at      DATETIME(6)     NOT NULL,
+    updated_at      DATETIME(6)     NOT NULL,
+
+    CONSTRAINT pk_attachments PRIMARY KEY (id),
+
+    CONSTRAINT uk_attachments_uuid UNIQUE (uuid),
+    CONSTRAINT uk_attachments_storage_key UNIQUE (storage_key),
+    CONSTRAINT uk_attachments_application_id_attachment_type UNIQUE (application_id, attachment_type),
+
+    CONSTRAINT fk_attachments_application
+        FOREIGN KEY (application_id)
+            REFERENCES applications (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT chk_attachments_attachment_type CHECK (
+        attachment_type IN ('MEDICAL_CERTIFICATE', 'SOLE_CUSTODY_PROOF')
+        ),
+
+    CONSTRAINT chk_attachments_mime_type CHECK (
+        mime_type IN ('application/pdf', 'image/jpeg', 'image/png')
+        ),
+
+    CONSTRAINT chk_attachments_file_size_bytes CHECK (file_size_bytes > 0)
+
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
