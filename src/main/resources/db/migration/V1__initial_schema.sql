@@ -488,16 +488,16 @@ CREATE TABLE application_guardian_snapshots
 
 CREATE TABLE application_signatures
 (
-    application_id      BIGINT          NOT NULL,
-    guardian_role       VARCHAR(10)     NOT NULL,
-    storage_key         VARCHAR(512)    NOT NULL,
-    mime_type           VARCHAR(100)    NOT NULL,
-    file_size_bytes     BIGINT UNSIGNED NOT NULL,
-    checksum_hash       BINARY(32)      NOT NULL,
-    signed_payload_hash BINARY(32)      NOT NULL,
-    signed_at           DATETIME(6)     NOT NULL,
-    created_at          DATETIME(6)     NOT NULL,
-    updated_at          DATETIME(6)     NOT NULL,
+    application_id      BIGINT                                NOT NULL,
+    guardian_role       VARCHAR(10)                           NOT NULL,
+    storage_key         VARCHAR(512) COLLATE utf8mb4_0900_bin NOT NULL,
+    mime_type           VARCHAR(100)                          NOT NULL,
+    file_size_bytes     BIGINT UNSIGNED                       NOT NULL,
+    checksum_hash       BINARY(32)                            NOT NULL,
+    signed_payload_hash BINARY(32)                            NOT NULL,
+    signed_at           DATETIME(6)                           NOT NULL,
+    created_at          DATETIME(6)                           NOT NULL,
+    updated_at          DATETIME(6)                           NOT NULL,
 
     CONSTRAINT pk_application_signatures PRIMARY KEY (application_id, guardian_role),
 
@@ -796,17 +796,17 @@ CREATE TABLE application_medical_questionnaires
 
 CREATE TABLE attachments
 (
-    id              BIGINT          NOT NULL AUTO_INCREMENT,
-    uuid            BINARY(16)      NOT NULL,
-    application_id  BIGINT          NOT NULL,
-    attachment_type VARCHAR(50)     NOT NULL,
-    filename        VARCHAR(255)    NOT NULL,
-    storage_key     VARCHAR(512)    NOT NULL,
-    mime_type       VARCHAR(100)    NOT NULL,
-    file_size_bytes BIGINT UNSIGNED NOT NULL,
-    checksum_hash   BINARY(32)      NOT NULL,
-    created_at      DATETIME(6)     NOT NULL,
-    updated_at      DATETIME(6)     NOT NULL,
+    id              BIGINT                                NOT NULL AUTO_INCREMENT,
+    uuid            BINARY(16)                            NOT NULL,
+    application_id  BIGINT                                NOT NULL,
+    attachment_type VARCHAR(50)                           NOT NULL,
+    filename        VARCHAR(255)                          NOT NULL,
+    storage_key     VARCHAR(512) COLLATE utf8mb4_0900_bin NOT NULL,
+    mime_type       VARCHAR(100)                          NOT NULL,
+    file_size_bytes BIGINT UNSIGNED                       NOT NULL,
+    checksum_hash   BINARY(32)                            NOT NULL,
+    created_at      DATETIME(6)                           NOT NULL,
+    updated_at      DATETIME(6)                           NOT NULL,
 
     CONSTRAINT pk_attachments PRIMARY KEY (id),
 
