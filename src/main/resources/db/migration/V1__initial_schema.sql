@@ -728,6 +728,7 @@ CREATE TABLE application_medical_questionnaires
     CONSTRAINT chk_application_medical_questionnaires_self_care_difficulties CHECK (
         (
             has_self_care_difficulties = 1
+                AND has_self_care_difficulties IS NOT NULL
                 AND self_care_difficulties_details IS NOT NULL
                 AND CHAR_LENGTH(TRIM(self_care_difficulties_details)) > 0
             )
@@ -741,6 +742,7 @@ CREATE TABLE application_medical_questionnaires
     CONSTRAINT chk_application_medical_questionnaires_allergies CHECK (
         (
             has_allergies = 1
+                AND has_allergies IS NOT NULL
                 AND allergies_details IS NOT NULL
                 AND CHAR_LENGTH(TRIM(allergies_details)) > 0
             )
@@ -754,6 +756,7 @@ CREATE TABLE application_medical_questionnaires
     CONSTRAINT chk_application_medical_questionnaires_anxiety_history CHECK (
         (
             has_anxiety_history = 1
+                AND has_anxiety_history IS NOT NULL
                 AND anxiety_details IS NOT NULL
                 AND CHAR_LENGTH(TRIM(anxiety_details)) > 0
             )
@@ -767,6 +770,7 @@ CREATE TABLE application_medical_questionnaires
     CONSTRAINT chk_application_medical_questionnaires_behavioral_issues_history CHECK (
         (
             has_behavioral_issues_history = 1
+                AND has_behavioral_issues_history IS NOT NULL
                 AND behavioral_issues_details IS NOT NULL
                 AND CHAR_LENGTH(TRIM(behavioral_issues_details)) > 0
             )
@@ -780,6 +784,7 @@ CREATE TABLE application_medical_questionnaires
     CONSTRAINT chk_application_medical_questionnaires_previous_camp_experience CHECK (
         (
             has_previous_camp_experience = 1
+                AND has_previous_camp_experience IS NOT NULL
                 AND previous_camp_experience_details IS NOT NULL
                 AND CHAR_LENGTH(TRIM(previous_camp_experience_details)) > 0
             )
