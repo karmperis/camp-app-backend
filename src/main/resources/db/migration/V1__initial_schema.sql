@@ -832,3 +832,58 @@ CREATE TABLE attachments
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE payment_attempts
+(
+    id                         BIGINT                                NOT NULL AUTO_INCREMENT,
+    uuid                       BINARY(16)                            NOT NULL,
+    application_id             BIGINT                                NOT NULL,
+    stripe_checkout_session_id VARCHAR(255) COLLATE utf8mb4_0900_bin NULL,
+    stripe_payment_intent_id   VARCHAR(255) COLLATE utf8mb4_0900_bin NULL,
+    amount                     DECIMAL(10, 2)                        NOT NULL,
+    currency                   CHAR(3)                               NOT NULL,
+    status                     VARCHAR(50)                           NOT NULL DEFAULT 'PENDING',
+    expires_at                 DATETIME(6)                           NULL,
+    paid_at                    DATETIME(6)                           NULL,
+    created_at                 DATETIME(6)                           NOT NULL,
+    updated_at                 DATETIME(6)                           NOT NULL,
+
+    CONSTRAINT pk_payment_attempts PRIMARY KEY (id),
+
+    CONSTRAINT uk_payment_attempts_uuid UNIQUE (uuid),
+    CONSTRAINT uk_payment_attempts_stripe_checkout_session_id UNIQUE (stripe_checkout_session_id),
+    CONSTRAINT uk_payment_attempts_stripe_payment_intent_id UNIQUE (stripe_payment_intent_id),
+
+    CONSTRAINT fk_payment_attempts_application
+        FOREIGN KEY (application_id)
+            REFERENCES applications (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT chk_payment_attempts_amount CHECK (amount > 0),
+    CONSTRAINT chk_payment_attempts_currency CHECK (currency IN ('EUR')),
+    CONSTRAINT chk_payment_attempts_status CHECK (
+        status IN (
+                   'PENDING',
+                   'PROCESSING',
+                   'SUCCEEDED',
+                   'FAILED',
+                   'EXPIRED'
+            )
+        ),
+    CONSTRAINT chk_payment_attempts_paid_at CHECK (
+        (
+            paid_at IS NOT NULL
+                AND status = 'SUCCEEDED'
+            )
+            OR
+        (
+            paid_at IS NULL
+                AND status <> 'SUCCEEDED'
+            )
+        ),
+
+    INDEX ix_payment_attempts_application_id_status (application_id, status)
+
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
