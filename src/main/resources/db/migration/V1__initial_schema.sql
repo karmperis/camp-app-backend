@@ -892,3 +892,55 @@ CREATE TABLE payment_attempts
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE refunds
+(
+    id                 BIGINT                                NOT NULL AUTO_INCREMENT,
+    uuid               BINARY(16)                            NOT NULL,
+    payment_attempt_id BIGINT                                NOT NULL,
+    refund_id          VARCHAR(255) COLLATE utf8mb4_0900_bin NOT NULL,
+    amount             DECIMAL(10, 2)                        NOT NULL,
+    currency           CHAR(3)                               NOT NULL,
+    status             VARCHAR(50)                           NOT NULL DEFAULT 'PENDING',
+    reason             VARCHAR(255)                          NULL,
+    refunded_at        DATETIME(6)                           NULL,
+    created_at         DATETIME(6)                           NOT NULL,
+    updated_at         DATETIME(6)                           NOT NULL,
+
+    CONSTRAINT pk_refunds PRIMARY KEY (id),
+    CONSTRAINT uk_refunds_uuid UNIQUE (uuid),
+    CONSTRAINT uk_refunds_refund_id UNIQUE (refund_id),
+
+    CONSTRAINT fk_refunds_payment_attempt
+        FOREIGN KEY (payment_attempt_id)
+            REFERENCES payment_attempts (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT chk_refunds_amount CHECK (amount > 0),
+    CONSTRAINT chk_refunds_currency CHECK (currency IN ('EUR')),
+    CONSTRAINT chk_refunds_status CHECK (
+        status IN (
+                   'PENDING',
+                   'REQUIRES_ACTION',
+                   'SUCCEEDED',
+                   'FAILED',
+                   'CANCELLED'
+            )
+        ),
+    CONSTRAINT chk_refunds_refunded_at CHECK (
+        (
+            refunded_at IS NOT NULL
+                AND status = 'SUCCEEDED'
+            )
+            OR
+        (
+            refunded_at IS NULL
+                AND status <> 'SUCCEEDED'
+            )
+        ),
+
+    INDEX ix_refunds_payment_attempt_id_status (payment_attempt_id, status)
+
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
