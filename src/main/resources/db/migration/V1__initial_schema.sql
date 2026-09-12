@@ -947,11 +947,71 @@ CREATE TABLE refunds
 
 CREATE TABLE webhook_events
 (
-    event_id VARCHAR(255) COLLATE utf8mb4_0900_bin NOT NULL,
-    event_type VARCHAR (100) NOT NULL,
-    processed_at DATETIME(6) NOT NULL,
+    event_id     VARCHAR(255) COLLATE utf8mb4_0900_bin NOT NULL,
+    event_type   VARCHAR(100)                          NOT NULL,
+    processed_at DATETIME(6)                           NOT NULL,
 
     CONSTRAINT pk_webhook_events PRIMARY KEY (event_id)
+
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE email_outbox
+(
+    id              BIGINT        NOT NULL AUTO_INCREMENT,
+    recipient       VARCHAR(255)  NOT NULL,
+    subject         VARCHAR(255)  NOT NULL,
+    body            MEDIUMTEXT    NOT NULL,
+    status          VARCHAR(50)   NOT NULL DEFAULT 'PENDING',
+    attempt_count   INT           NOT NULL DEFAULT 0,
+    next_attempt_at DATETIME(6)   NOT NULL,
+    last_error      VARCHAR(2000) NULL,
+    sent_at         DATETIME(6)   NULL,
+    created_at      DATETIME(6)   NOT NULL,
+    updated_at      DATETIME(6)   NOT NULL,
+
+    CONSTRAINT pk_email_outbox PRIMARY KEY (id),
+
+    CONSTRAINT chk_email_outbox_recipient CHECK (
+        recipient IS NOT NULL
+            AND CHAR_LENGTH(TRIM(recipient)) > 0
+        ),
+
+    CONSTRAINT chk_email_outbox_subject CHECK (
+        subject IS NOT NULL
+            AND CHAR_LENGTH(TRIM(subject)) > 0
+        ),
+
+    CONSTRAINT chk_email_outbox_body CHECK (
+        body IS NOT NULL
+            AND CHAR_LENGTH(TRIM(body)) > 0
+        ),
+
+    CONSTRAINT chk_email_outbox_status CHECK (
+        status IN (
+                   'PENDING',
+                   'PROCESSING',
+                   'SENT',
+                   'FAILED'
+            )
+        ),
+
+    CONSTRAINT chk_email_outbox_attempt_count CHECK (attempt_count >= 0),
+
+    CONSTRAINT chk_email_outbox_sent_at CHECK (
+        (
+            sent_at IS NOT NULL
+                AND status = 'SENT'
+            )
+            OR
+        (
+            sent_at IS NULL
+                AND status <> 'SENT'
+            )
+        ),
+
+    INDEX ix_email_outbox_status_next_attempt_at (status, next_attempt_at)
 
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
