@@ -1016,3 +1016,51 @@ CREATE TABLE email_outbox
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE audit_log
+(
+    id            BIGINT       NOT NULL AUTO_INCREMENT,
+    actor_type    VARCHAR(20)  NOT NULL,
+    actor_user_id BIGINT       NULL,
+    action        VARCHAR(100) NOT NULL,
+    entity_type   VARCHAR(50)  NOT NULL,
+    entity_id     BIGINT       NOT NULL,
+    details       JSON         NULL,
+    created_at    DATETIME(6)  NOT NULL,
+
+    CONSTRAINT pk_audit_log PRIMARY KEY (id),
+
+    CONSTRAINT fk_audit_log_actor_user
+        FOREIGN KEY (actor_user_id)
+            REFERENCES users (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT chk_audit_log_actor_type CHECK (
+        (
+            actor_type = 'USER'
+                AND actor_user_id IS NOT NULL
+            )
+            OR
+        (
+            actor_type = 'SYSTEM'
+                AND actor_user_id IS NULL
+            )
+        ),
+
+    CONSTRAINT chk_audit_log_action CHECK (
+        CHAR_LENGTH(TRIM(action)) > 0
+        ),
+
+    CONSTRAINT chk_audit_log_entity_type CHECK (
+        (
+            entity_type IS NOT NULL
+                AND CHAR_LENGTH(TRIM(entity_type)) > 0
+            )
+        ),
+
+    INDEX ix_audit_log_entity_type_entity_id_created_at (entity_type, entity_id, created_at),
+    INDEX ix_audit_log_actor_user_id_created_at (actor_user_id, created_at)
+
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
