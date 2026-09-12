@@ -414,7 +414,8 @@ CREATE TABLE applications
         ),
 
     INDEX ix_applications_camp_period_status (camp_period_id, status),
-    INDEX ix_applications_applicant_guardian_id (applicant_guardian_id)
+    INDEX ix_applications_applicant_guardian_id (applicant_guardian_id),
+    INDEX ix_applications_status_payment_deadline (status, payment_deadline)
 
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -653,7 +654,8 @@ CREATE TABLE application_status_history
     CONSTRAINT chk_application_status_history_actor_type CHECK (
         actor_type IN (
                        'GUARDIAN',
-                       'ADMIN',
+                       'LEADER'
+                           'ADMIN',
                        'SYSTEM',
                        'STRIPE'
             )
@@ -661,7 +663,7 @@ CREATE TABLE application_status_history
 
     CONSTRAINT chk_application_status_history_actor_user CHECK (
         (
-            actor_type IN ('GUARDIAN', 'ADMIN')
+            actor_type IN ('GUARDIAN', 'LEADER' 'ADMIN')
                 AND actor_user_id IS NOT NULL
             )
             OR
