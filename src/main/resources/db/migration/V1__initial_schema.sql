@@ -1,11 +1,14 @@
 -- V1__initial_schema.sql
--- MySQL 8 / InnoDB / utf8mb4_0900_ai_ci
+-- MySQL 8.0.17+ / InnoDB / utf8mb4
+-- Default collation: utf8mb4_0900_ai_ci
+-- Storage keys and external IDs use utf8mb4_0900_bin.
+-- All DATETIME(6) values are written and read in UTC by the application.
 
 /*
 ============================================================================
 Authentication & Authorization
 ============================================================================
-Tables for authentication (users) and authorization (roles, capabilities).
+User accounts, roles, capabilities, and role-capability assignments.
 */
 
 CREATE TABLE roles
@@ -14,7 +17,9 @@ CREATE TABLE roles
     name VARCHAR(50) NOT NULL,
 
     CONSTRAINT pk_roles PRIMARY KEY (id),
+
     CONSTRAINT uk_roles_name UNIQUE (name)
+
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
@@ -26,7 +31,9 @@ CREATE TABLE capabilities
     description VARCHAR(255) NULL,
 
     CONSTRAINT pk_capabilities PRIMARY KEY (id),
+
     CONSTRAINT uk_capabilities_name UNIQUE (name)
+
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
@@ -47,6 +54,7 @@ CREATE TABLE roles_capabilities
             ON DELETE CASCADE,
 
     INDEX ix_roles_capabilities_capability_id (capability_id)
+
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
@@ -64,6 +72,7 @@ CREATE TABLE users
     deleted_at DATETIME(6)  NULL,
 
     CONSTRAINT pk_users PRIMARY KEY (id),
+
     CONSTRAINT uk_users_uuid UNIQUE (uuid),
     CONSTRAINT uk_users_email UNIQUE (email),
 
@@ -81,15 +90,16 @@ CREATE TABLE users
 
     INDEX ix_users_role_id (role_id),
     INDEX ix_users_deleted_at (deleted_at)
+
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
 
 /*
 ============================================================================
-Domain tables
+Campers, Guardians & Leaders
 ============================================================================
-Tables for business logic.
+Participant profiles and camper-guardian relationships.
 */
 
 CREATE TABLE guardians
@@ -106,6 +116,7 @@ CREATE TABLE guardians
     deleted_at      DATETIME(6)  NULL,
 
     CONSTRAINT pk_guardians PRIMARY KEY (id),
+
     CONSTRAINT uk_guardians_user_id UNIQUE (user_id),
     CONSTRAINT uk_guardians_uuid UNIQUE (uuid),
     CONSTRAINT uk_guardians_identity_number UNIQUE (identity_number),
@@ -129,6 +140,7 @@ CREATE TABLE leaders
     updated_at   DATETIME(6)  NOT NULL,
 
     CONSTRAINT pk_leaders PRIMARY KEY (user_id),
+
     CONSTRAINT uk_leaders_uuid UNIQUE (uuid),
 
     CONSTRAINT fk_leaders_user
@@ -158,6 +170,7 @@ CREATE TABLE campers
     deleted_at    DATETIME(6)  NULL,
 
     CONSTRAINT pk_campers PRIMARY KEY (id),
+
     CONSTRAINT uk_campers_uuid UNIQUE (uuid),
 
     CONSTRAINT chk_campers_gender
@@ -204,6 +217,13 @@ CREATE TABLE campers_guardians
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
 
+/*
+============================================================================
+Camp Periods & Eligibility
+============================================================================
+School grades, camp periods, eligibility criteria, and leader assignments.
+*/
+
 CREATE TABLE school_grades
 (
     id            BIGINT            NOT NULL AUTO_INCREMENT,
@@ -212,6 +232,7 @@ CREATE TABLE school_grades
     active        TINYINT(1)        NOT NULL DEFAULT 1,
 
     CONSTRAINT pk_school_grades PRIMARY KEY (id),
+
     CONSTRAINT uk_school_grades_grade UNIQUE (grade),
     CONSTRAINT uk_school_grades_display_order UNIQUE (display_order),
 
@@ -243,7 +264,16 @@ CREATE TABLE camp_periods
     deleted_at           DATETIME(6)    NULL,
 
     CONSTRAINT pk_camp_periods PRIMARY KEY (id),
+
     CONSTRAINT uk_camp_periods_uuid UNIQUE (uuid),
+
+    CONSTRAINT fk_camp_periods_min_school_grade
+        FOREIGN KEY (min_school_grade_id) REFERENCES school_grades (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT fk_camp_periods_max_school_grade
+        FOREIGN KEY (max_school_grade_id) REFERENCES school_grades (id)
+            ON DELETE RESTRICT,
 
     CONSTRAINT chk_camp_periods_date_range
         CHECK (start_date <= end_date),
@@ -257,25 +287,14 @@ CREATE TABLE camp_periods
     CONSTRAINT chk_camp_periods_allowed_gender
         CHECK (allowed_gender IN ('MALE', 'FEMALE')),
 
-    CONSTRAINT fk_camp_periods_min_school_grade
-        FOREIGN KEY (min_school_grade_id) REFERENCES school_grades (id)
-            ON DELETE RESTRICT,
-
-    CONSTRAINT fk_camp_periods_max_school_grade
-        FOREIGN KEY (max_school_grade_id) REFERENCES school_grades (id)
-            ON DELETE RESTRICT,
-
     CONSTRAINT chk_camp_periods_capacity_positive
         CHECK (max_capacity > 0),
 
     CONSTRAINT chk_camp_periods_status
         CHECK (status IN ('DRAFT', 'OPEN', 'CLOSED')),
 
-    INDEX ix_camp_periods_min_school_grade_id
-        (min_school_grade_id),
-
-    INDEX ix_camp_periods_max_school_grade_id
-        (max_school_grade_id)
+    INDEX ix_camp_periods_min_school_grade_id (min_school_grade_id),
+    INDEX ix_camp_periods_max_school_grade_id (max_school_grade_id)
 
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -297,9 +316,18 @@ CREATE TABLE camp_periods_leaders
             ON DELETE CASCADE,
 
     INDEX ix_camp_periods_leaders_leader_user_id (leader_user_id)
+
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+/*
+============================================================================
+Applications & Supporting Data
+============================================================================
+Applications, snapshots, signatures, pricing, status history,
+friend preferences, medical questionnaires, and uploaded attachments.
+*/
 
 CREATE TABLE applications
 (
@@ -321,7 +349,21 @@ CREATE TABLE applications
     deleted_at             DATETIME(6)  NULL,
 
     CONSTRAINT pk_applications PRIMARY KEY (id),
+
     CONSTRAINT uk_applications_uuid UNIQUE (uuid),
+    CONSTRAINT uk_applications_camper_period UNIQUE (camper_id, camp_period_id),
+
+    CONSTRAINT fk_applications_camper
+        FOREIGN KEY (camper_id) REFERENCES campers (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT fk_applications_camp_period
+        FOREIGN KEY (camp_period_id) REFERENCES camp_periods (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT fk_applications_applicant_guardian
+        FOREIGN KEY (applicant_guardian_id) REFERENCES guardians (id)
+            ON DELETE RESTRICT,
 
     CONSTRAINT chk_applications_joint_custody_value CHECK (
         joint_custody IS NULL OR joint_custody IN (0, 1)
@@ -340,21 +382,6 @@ CREATE TABLE applications
         status = 'DRAFT'
             OR wants_friend_placement IS NOT NULL
         ),
-
-    CONSTRAINT uk_applications_camper_period
-        UNIQUE (camper_id, camp_period_id),
-
-    CONSTRAINT fk_applications_camper
-        FOREIGN KEY (camper_id) REFERENCES campers (id)
-            ON DELETE RESTRICT,
-
-    CONSTRAINT fk_applications_camp_period
-        FOREIGN KEY (camp_period_id) REFERENCES camp_periods (id)
-            ON DELETE RESTRICT,
-
-    CONSTRAINT fk_applications_applicant_guardian
-        FOREIGN KEY (applicant_guardian_id) REFERENCES guardians (id)
-            ON DELETE RESTRICT,
 
     CONSTRAINT chk_applications_status CHECK (
         status IN (
@@ -386,8 +413,7 @@ CREATE TABLE applications
         deleted_at IS NULL OR status = 'DRAFT'
         ),
 
-    INDEX ix_applications_camp_period_status
-        (camp_period_id, status),
+    INDEX ix_applications_camp_period_status (camp_period_id, status),
     INDEX ix_applications_applicant_guardian_id (applicant_guardian_id)
 
 ) ENGINE = InnoDB
@@ -446,6 +472,7 @@ CREATE TABLE application_guardian_snapshots
     updated_at             DATETIME(6)  NOT NULL,
 
     CONSTRAINT pk_application_guardian_snapshots PRIMARY KEY (application_id, guardian_role),
+
     CONSTRAINT uk_application_guardian_snapshots_application_guardian UNIQUE (application_id, guardian_id),
 
     CONSTRAINT fk_application_guardian_snapshots_application
@@ -501,16 +528,16 @@ CREATE TABLE application_signatures
 
     CONSTRAINT pk_application_signatures PRIMARY KEY (application_id, guardian_role),
 
+    CONSTRAINT uk_application_signatures_storage_key UNIQUE (storage_key),
+
     CONSTRAINT fk_application_signatures_application_guardian_snapshot
         FOREIGN KEY (application_id, guardian_role)
             REFERENCES application_guardian_snapshots (application_id, guardian_role)
             ON DELETE CASCADE,
 
-    CONSTRAINT uk_application_signatures_storage_key UNIQUE (storage_key),
-
     CONSTRAINT chk_application_signatures_mime_type CHECK (mime_type = 'image/png'),
-
     CONSTRAINT chk_application_signatures_file_size CHECK (file_size_bytes > 0)
+
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
@@ -583,6 +610,11 @@ CREATE TABLE application_status_history
             REFERENCES applications (id)
             ON DELETE CASCADE,
 
+    CONSTRAINT fk_application_status_history_actor_user
+        FOREIGN KEY (actor_user_id)
+            REFERENCES users (id)
+            ON DELETE RESTRICT,
+
     CONSTRAINT chk_application_status_history_from_status CHECK (
         from_status IS NULL
             OR from_status IN (
@@ -638,11 +670,6 @@ CREATE TABLE application_status_history
                 AND actor_user_id IS NULL
             )
         ),
-
-    CONSTRAINT fk_application_status_history_actor_user
-        FOREIGN KEY (actor_user_id)
-            REFERENCES users (id)
-            ON DELETE RESTRICT,
 
     CONSTRAINT chk_application_status_history_rejection_reason CHECK (
         to_status <> 'REJECTED'
@@ -838,6 +865,13 @@ CREATE TABLE attachments
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
 
+/*
+============================================================================
+Payments & Stripe Integration
+============================================================================
+Payment attempts, refunds, and successfully processed webhook events.
+*/
+
 CREATE TABLE payment_attempts
 (
     id                         BIGINT                                NOT NULL AUTO_INCREMENT,
@@ -866,6 +900,7 @@ CREATE TABLE payment_attempts
 
     CONSTRAINT chk_payment_attempts_amount CHECK (amount > 0),
     CONSTRAINT chk_payment_attempts_currency CHECK (currency IN ('EUR')),
+
     CONSTRAINT chk_payment_attempts_status CHECK (
         status IN (
                    'PENDING',
@@ -875,6 +910,7 @@ CREATE TABLE payment_attempts
                    'EXPIRED'
             )
         ),
+
     CONSTRAINT chk_payment_attempts_paid_at CHECK (
         (
             paid_at IS NOT NULL
@@ -908,6 +944,7 @@ CREATE TABLE refunds
     updated_at         DATETIME(6)                           NOT NULL,
 
     CONSTRAINT pk_refunds PRIMARY KEY (id),
+
     CONSTRAINT uk_refunds_uuid UNIQUE (uuid),
     CONSTRAINT uk_refunds_refund_id UNIQUE (refund_id),
 
@@ -918,6 +955,7 @@ CREATE TABLE refunds
 
     CONSTRAINT chk_refunds_amount CHECK (amount > 0),
     CONSTRAINT chk_refunds_currency CHECK (currency IN ('EUR')),
+
     CONSTRAINT chk_refunds_status CHECK (
         status IN (
                    'PENDING',
@@ -927,6 +965,7 @@ CREATE TABLE refunds
                    'CANCELLED'
             )
         ),
+
     CONSTRAINT chk_refunds_refunded_at CHECK (
         (
             refunded_at IS NOT NULL
@@ -956,6 +995,13 @@ CREATE TABLE webhook_events
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+/*
+============================================================================
+Email Delivery
+============================================================================
+Outgoing emails, delivery attempts, and retry scheduling.
+*/
 
 CREATE TABLE email_outbox
 (
@@ -1016,6 +1062,13 @@ CREATE TABLE email_outbox
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+/*
+============================================================================
+Audit Trail
+============================================================================
+Records of significant user and system actions.
+*/
 
 CREATE TABLE audit_log
 (
