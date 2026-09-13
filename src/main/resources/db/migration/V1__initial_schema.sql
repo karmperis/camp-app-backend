@@ -654,8 +654,8 @@ CREATE TABLE application_status_history
     CONSTRAINT chk_application_status_history_actor_type CHECK (
         actor_type IN (
                        'GUARDIAN',
-                       'LEADER'
-                           'ADMIN',
+                       'LEADER',
+                        'ADMIN',
                        'SYSTEM',
                        'STRIPE'
             )
@@ -663,7 +663,7 @@ CREATE TABLE application_status_history
 
     CONSTRAINT chk_application_status_history_actor_user CHECK (
         (
-            actor_type IN ('GUARDIAN', 'LEADER' 'ADMIN')
+            actor_type IN ('GUARDIAN', 'LEADER', 'ADMIN')
                 AND actor_user_id IS NOT NULL
             )
             OR
