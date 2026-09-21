@@ -10,6 +10,7 @@ import java.util.UUID;
 /**
  * Repository for managing Role entities.
  */
+
 public interface RoleRepository extends JpaRepository<Role, Long> {
 
     /**
