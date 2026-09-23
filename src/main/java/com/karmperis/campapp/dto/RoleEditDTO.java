@@ -13,8 +13,8 @@ import jakarta.validation.constraints.Size;
 @GroupSequence({RoleEditDTO.First.class, RoleEditDTO.Second.class, RoleEditDTO.class})
 public record RoleEditDTO(
 
-        @NotBlank(message = "The role name cannot be blank.", groups = RoleEditDTO.First.class)
-        @Size(min = 4, max = 50, message = "The role name must contain between 4 and 50 characters.", groups = RoleEditDTO.Second.class)
+        @NotBlank(message = "The role name cannot be blank.", groups = First.class)
+        @Size(min = 4, max = 50, message = "The role name must contain between 4 and 50 characters.", groups = Second.class)
         String name
 ) {
 
