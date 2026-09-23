@@ -5,8 +5,8 @@ import java.util.UUID;
 /**
  * Data transfer object for reading a role.
  *
- * @param uuid the role's unique identifier
- * @param name the role's name
+ * @param uuid the role unique identifier
+ * @param name the role name
  */
 
 public record RoleReadOnlyDTO(
