@@ -5,7 +5,7 @@ package com.karmperis.campapp.core.exceptions;
  */
 
 public class EntityInvalidArgumentException extends AppGenericException {
-    public static final String CODE_SUFFIX = "InvalidArgument";
+    private static final String CODE_SUFFIX = "InvalidArgument";
 
     /**
      * Create a new exception for an "invalid argument" error.
