@@ -3,7 +3,7 @@ package com.karmperis.campapp.dto;
 import java.util.Map;
 
 /**
- * DTO used for validation error responses.
+ * A data transfer object used for validation error responses.
  *
  * @param code    the error code
  * @param message the error message
