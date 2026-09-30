@@ -3,6 +3,7 @@ package com.karmperis.campapp.service;
 import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
 import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
 import com.karmperis.campapp.core.exceptions.EntityNotFoundException;
+import com.karmperis.campapp.core.exceptions.OperationNotAllowedException;
 import com.karmperis.campapp.dto.CapabilityReadOnlyDTO;
 import com.karmperis.campapp.dto.RoleEditDTO;
 import com.karmperis.campapp.dto.RoleInsertDTO;
@@ -55,9 +56,11 @@ public interface IRoleService {
      * @throws EntityNotFoundException        if the role is not found
      * @throws EntityAlreadyExistsException   if the name is used by another role, including a soft-deleted role
      * @throws EntityInvalidArgumentException if the input is invalid
+     * @throws OperationNotAllowedException   if a business rule prevents the operation
      */
     RoleReadOnlyDTO updateRole(UUID uuid, RoleEditDTO dto)
-            throws EntityNotFoundException, EntityAlreadyExistsException, EntityInvalidArgumentException;
+            throws EntityNotFoundException, EntityAlreadyExistsException,
+            EntityInvalidArgumentException, OperationNotAllowedException;
 
     /**
      * Soft deletes a role by its UUID.
@@ -65,9 +68,10 @@ public interface IRoleService {
      * @param uuid the UUID of the role to soft-delete
      * @throws EntityNotFoundException        if the role is not found
      * @throws EntityInvalidArgumentException if the input is invalid
+     * @throws OperationNotAllowedException   if a business rule prevents the operation
      */
     void softDeleteRoleByUuid(UUID uuid)
-            throws EntityNotFoundException, EntityInvalidArgumentException;
+            throws EntityNotFoundException, EntityInvalidArgumentException, OperationNotAllowedException;
 
     /**
      * Finds all soft-deleted roles, ordered by name in ascending order.
