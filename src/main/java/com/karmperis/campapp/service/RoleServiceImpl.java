@@ -86,9 +86,25 @@ public class RoleServiceImpl implements IRoleService {
         return roleMapper.mapToRoleReadOnlyDTO(savedRole);
     }
 
+    /**
+     * Finds a non soft-deleted role by its UUID.
+     *
+     * @param uuid the UUID of the role to find
+     * @return the found role
+     * @throws EntityNotFoundException        if the role is not found
+     * @throws EntityInvalidArgumentException if the UUID is null
+     */
     @Override
-    public RoleReadOnlyDTO findRoleByUuid(UUID uuid) throws EntityNotFoundException, EntityInvalidArgumentException {
-        return null;
+    public RoleReadOnlyDTO findRoleByUuid(UUID uuid)
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        log.info("Attempting to find role by UUID: {}", uuid);
+
+        validateUuid(uuid, "Role UUID");
+
+        return roleRepository.findByUuidAndDeletedAtIsNull(uuid)
+                .map(roleMapper::mapToRoleReadOnlyDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + uuid + " not found"));
     }
 
     @Override
@@ -165,5 +181,19 @@ public class RoleServiceImpl implements IRoleService {
         }
 
         return false;
+    }
+
+    /**
+     * Validates that the given UUID is not null.
+     *
+     * @param uuid      the UUID to validate
+     * @param fieldName the name of the field being validated
+     * @throws EntityInvalidArgumentException if the UUID is null
+     */
+    private void validateUuid(UUID uuid, String fieldName)
+            throws EntityInvalidArgumentException {
+        if (uuid == null) {
+            throw new EntityInvalidArgumentException("Role", fieldName + " cannot be null");
+        }
     }
 }
