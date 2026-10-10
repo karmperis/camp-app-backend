@@ -107,9 +107,20 @@ public class RoleServiceImpl implements IRoleService {
                 .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + uuid + " not found"));
     }
 
+    /**
+     * Finds all non-soft-deleted roles, ordered by name in ascending order.
+     *
+     * @return the role data transfer objects, or an empty list if none are found
+     */
     @Override
+    @Transactional(readOnly = true)
     public List<RoleReadOnlyDTO> findAllRoles() {
-        return List.of();
+        log.info("Attempting to find all not deleted roles.");
+
+        return roleRepository.findAllByDeletedAtIsNullOrderByNameAsc()
+                .stream()
+                .map(roleMapper::mapToRoleReadOnlyDTO)
+                .toList();
     }
 
     @Override
