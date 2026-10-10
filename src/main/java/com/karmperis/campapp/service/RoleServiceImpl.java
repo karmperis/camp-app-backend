@@ -139,6 +139,7 @@ public class RoleServiceImpl implements IRoleService {
      * @return the role data transfer objects, or an empty list if none are found
      */
     @Override
+    @Transactional(readOnly = true)
     public List<RoleReadOnlyDTO> findAllSoftDeletedRoles() {
         log.info("Attempting to find all soft-deleted roles.");
 
