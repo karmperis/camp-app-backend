@@ -133,9 +133,19 @@ public class RoleServiceImpl implements IRoleService {
 
     }
 
+    /**
+     * Finds all soft-deleted roles, ordered by name in ascending order.
+     *
+     * @return the role data transfer objects, or an empty list if none are found
+     */
     @Override
     public List<RoleReadOnlyDTO> findAllSoftDeletedRoles() {
-        return List.of();
+        log.info("Attempting to find all soft-deleted roles.");
+
+        return roleRepository.findAllByDeletedAtIsNotNullOrderByNameAsc()
+                .stream()
+                .map(roleMapper::mapToRoleReadOnlyDTO)
+                .toList();
     }
 
     @Override
