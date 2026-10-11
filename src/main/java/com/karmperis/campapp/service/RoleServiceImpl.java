@@ -20,6 +20,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -124,8 +125,57 @@ public class RoleServiceImpl implements IRoleService {
     }
 
     @Override
-    public RoleReadOnlyDTO updateRole(UUID uuid, RoleEditDTO dto) throws EntityNotFoundException, EntityAlreadyExistsException, EntityInvalidArgumentException, OperationNotAllowedException {
-        return null;
+    @Transactional(rollbackFor = {EntityNotFoundException.class, EntityAlreadyExistsException.class,
+            EntityInvalidArgumentException.class, OperationNotAllowedException.class})
+    public RoleReadOnlyDTO updateRole(UUID uuid, RoleEditDTO dto)
+            throws EntityNotFoundException, EntityAlreadyExistsException,
+            EntityInvalidArgumentException, OperationNotAllowedException {
+
+        log.info("Updating role with UUID: {}", uuid);
+
+        validateUuid(uuid, "Role UUID");
+
+        if(dto == null){
+            throw new EntityInvalidArgumentException("Role", "Role data cannot be null");
+        }
+
+        validateRoleData(dto.name());
+
+        Role role = roleRepository.findByUuidAndDeletedAtIsNull(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + uuid + " not found"));
+
+        if (Set.of("ADMIN", "GUARDIAN", "LEADER").contains(role.getName()) && !role.getName().equals(dto.name())) {
+            throw new OperationNotAllowedException("Role", "Built-in roles cannot be renamed."
+            );
+        }
+
+        if(roleRepository.existsByNameAndUuidNot(dto.name(), uuid)){
+            throw new EntityAlreadyExistsException("Role", "Role with name " + dto.name() + " already exists");
+        }
+
+        roleMapper.updateRoleFromDTO(dto, role);
+
+        Role updatedRole;
+
+        try {
+            updatedRole = roleRepository.saveAndFlush(role);
+        } catch (DataIntegrityViolationException e) {
+            if (!isRoleNameConflict(e)) {
+                throw e;
+            }
+            throw new EntityAlreadyExistsException("Role", "Role with name " + dto.name() + " already exists");
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        log.info("Role with UUID {} updated successfully", uuid);
+                    }
+                }
+        );
+
+        return roleMapper.mapToRoleReadOnlyDTO(updatedRole);
     }
 
     @Override
