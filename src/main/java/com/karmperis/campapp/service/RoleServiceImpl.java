@@ -124,6 +124,17 @@ public class RoleServiceImpl implements IRoleService {
                 .toList();
     }
 
+    /**
+     * Updates a non-soft-deleted role by its UUID.
+     *
+     * @param uuid the UUID of the role to update
+     * @param dto  the data transfer object containing the updated role information
+     * @return the updated role
+     * @throws EntityNotFoundException        if the role does not exist or is soft-deleted
+     * @throws EntityAlreadyExistsException   if the name is used by another role, including a soft-deleted role
+     * @throws EntityInvalidArgumentException if the UUID or DTO is null or the role name is invalid
+     * @throws OperationNotAllowedException   if a built-in role would be renamed
+     */
     @Override
     @Transactional(rollbackFor = {EntityNotFoundException.class, EntityAlreadyExistsException.class,
             EntityInvalidArgumentException.class, OperationNotAllowedException.class})
@@ -135,7 +146,7 @@ public class RoleServiceImpl implements IRoleService {
 
         validateUuid(uuid, "Role UUID");
 
-        if(dto == null){
+        if (dto == null) {
             throw new EntityInvalidArgumentException("Role", "Role data cannot be null");
         }
 
@@ -149,7 +160,7 @@ public class RoleServiceImpl implements IRoleService {
             );
         }
 
-        if(roleRepository.existsByNameAndUuidNot(dto.name(), uuid)){
+        if (roleRepository.existsByNameAndUuidNot(dto.name(), uuid)) {
             throw new EntityAlreadyExistsException("Role", "Role with name " + dto.name() + " already exists");
         }
 
