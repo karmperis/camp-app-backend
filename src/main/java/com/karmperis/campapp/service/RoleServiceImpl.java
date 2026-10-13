@@ -162,7 +162,7 @@ public class RoleServiceImpl implements IRoleService {
         Role role = roleRepository.findByUuidAndDeletedAtIsNull(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + uuid + " not found"));
 
-        if (BUILT_IN_ROLES.contains(role.getName())) {
+        if (BUILT_IN_ROLES.contains(role.getName()) && !role.getName().equals(dto.name())) {
             throw new OperationNotAllowedException("Role", "Built-in roles cannot be renamed."
             );
         }
