@@ -71,11 +71,12 @@ public class RoleServiceImpl implements IRoleService {
         try {
             savedRole = roleRepository.saveAndFlush(role);
         } catch (DataIntegrityViolationException e) {
-            if (!isRoleNameConflict(e)) {
-                throw e;
+            if (isRoleNameConflict(e)) {
+                throw new EntityAlreadyExistsException("Role", "Role with name " + dto.name() + " already exists"
+                );
             }
 
-            throw new EntityAlreadyExistsException("Role", "Role with name " + dto.name() + " already exists");
+            throw e;
         }
 
         UUID roleUuid = savedRole.getUuid();
@@ -177,10 +178,12 @@ public class RoleServiceImpl implements IRoleService {
         try {
             updatedRole = roleRepository.saveAndFlush(role);
         } catch (DataIntegrityViolationException e) {
-            if (!isRoleNameConflict(e)) {
-                throw e;
+            if (isRoleNameConflict(e)) {
+                throw new EntityAlreadyExistsException("Role", "Role with name " + dto.name() + " already exists"
+                );
             }
-            throw new EntityAlreadyExistsException("Role", "Role with name " + dto.name() + " already exists");
+
+            throw e;
         }
 
         TransactionSynchronizationManager.registerSynchronization(
