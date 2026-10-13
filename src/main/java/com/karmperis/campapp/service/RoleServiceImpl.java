@@ -81,13 +81,8 @@ public class RoleServiceImpl implements IRoleService {
 
         UUID roleUuid = savedRole.getUuid();
 
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        log.info("Role saved successfully with UUID: {}", roleUuid);
-                    }
-                }
+        afterCommit(() ->
+                log.info("Role saved successfully with UUID: {}", roleUuid)
         );
 
         return roleMapper.mapToRoleReadOnlyDTO(savedRole);
@@ -186,13 +181,8 @@ public class RoleServiceImpl implements IRoleService {
             throw e;
         }
 
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        log.info("Role with UUID {} updated successfully", uuid);
-                    }
-                }
+        afterCommit(() ->
+                log.info("Role updated successfully with UUID: {}", uuid)
         );
 
         return roleMapper.mapToRoleReadOnlyDTO(updatedRole);
@@ -228,15 +218,9 @@ public class RoleServiceImpl implements IRoleService {
         role.softDelete();
         roleRepository.saveAndFlush(role);
 
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        log.info("Role with UUID {} soft-deleted successfully", uuid);
-                    }
-                }
+        afterCommit(() ->
+                log.info("Role soft-deleted successfully with UUID: {}", uuid)
         );
-
     }
 
     /**
@@ -295,15 +279,11 @@ public class RoleServiceImpl implements IRoleService {
             throw e;
         }
 
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        log.info("Capability with UUID {} assigned to role with UUID {} successfully", capabilityUuid, roleUuid);
-                    }
-                }
+        afterCommit(() ->
+                log.info(
+                        "Capability with UUID {} assigned to role with UUID {} successfully", capabilityUuid, roleUuid
+                )
         );
-
     }
 
     /**
@@ -336,13 +316,10 @@ public class RoleServiceImpl implements IRoleService {
 
         role.removeCapability(capability);
 
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        log.info("Capability with UUID {} removed from role with UUID {} successfully", capabilityUuid, roleUuid);
-                    }
-                }
+        afterCommit(() ->
+                log.info(
+                        "Capability with UUID {} removed from role with UUID {} successfully", capabilityUuid, roleUuid
+                )
         );
 
     }
@@ -453,5 +430,21 @@ public class RoleServiceImpl implements IRoleService {
         if (uuid == null) {
             throw new EntityInvalidArgumentException(entityName, entityName + " UUID cannot be null");
         }
+    }
+
+    /**
+     * Registers an action to run after a successful transaction commit.
+     *
+     * @param action the action to execute
+     */
+    private void afterCommit(Runnable action) {
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        action.run();
+                    }
+                }
+        );
     }
 }
