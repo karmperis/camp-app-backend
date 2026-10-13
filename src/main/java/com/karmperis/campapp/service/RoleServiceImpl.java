@@ -75,7 +75,6 @@ public class RoleServiceImpl implements IRoleService {
                 throw new EntityAlreadyExistsException("Role", "Role with name " + dto.name() + " already exists"
                 );
             }
-
             throw e;
         }
 
@@ -118,6 +117,7 @@ public class RoleServiceImpl implements IRoleService {
     @Override
     @Transactional(readOnly = true)
     public List<RoleReadOnlyDTO> findAllRoles() {
+
         log.info("Attempting to find all not deleted roles.");
 
         return roleRepository.findAllByDeletedAtIsNullOrderByNameAsc()
@@ -177,7 +177,6 @@ public class RoleServiceImpl implements IRoleService {
                 throw new EntityAlreadyExistsException("Role", "Role with name " + dto.name() + " already exists"
                 );
             }
-
             throw e;
         }
 
@@ -231,6 +230,7 @@ public class RoleServiceImpl implements IRoleService {
     @Override
     @Transactional(readOnly = true)
     public List<RoleReadOnlyDTO> findAllSoftDeletedRoles() {
+
         log.info("Attempting to find all soft-deleted roles.");
 
         return roleRepository.findAllByDeletedAtIsNotNullOrderByNameAsc()
@@ -267,6 +267,7 @@ public class RoleServiceImpl implements IRoleService {
         if (role.hasCapability(capability)) {
             throw new EntityAlreadyExistsException("Capability", "Capability with UUID " + capabilityUuid + " is already assigned to role with UUID " + roleUuid);
         }
+
         role.addCapability(capability);
 
         try {
@@ -321,7 +322,6 @@ public class RoleServiceImpl implements IRoleService {
                         "Capability with UUID {} removed from role with UUID {} successfully", capabilityUuid, roleUuid
                 )
         );
-
     }
 
     /**
@@ -360,6 +360,7 @@ public class RoleServiceImpl implements IRoleService {
      * @throws EntityInvalidArgumentException if the role data is invalid
      */
     private void validateRoleData(String name) throws EntityInvalidArgumentException {
+
         if (name == null || name.isBlank()) {
             throw new EntityInvalidArgumentException("Role", "Role name cannot be blank");
         }
@@ -384,8 +385,7 @@ public class RoleServiceImpl implements IRoleService {
             if (cause instanceof org.hibernate.exception.ConstraintViolationException violation) {
                 String constraintName = violation.getConstraintName();
 
-                return "uk_roles_name".equals(constraintName)
-                        || "roles.uk_roles_name".equals(constraintName);
+                return "uk_roles_name".equals(constraintName) || "roles.uk_roles_name".equals(constraintName);
             }
 
             cause = cause.getCause();
@@ -405,9 +405,7 @@ public class RoleServiceImpl implements IRoleService {
 
         while (cause != null) {
             if (cause instanceof org.hibernate.exception.ConstraintViolationException violation) {
-                return violation.getErrorCode() == 1062
-                        && "roles_capabilities.PRIMARY".equals(
-                        violation.getConstraintName()
+                return violation.getErrorCode() == 1062 && "roles_capabilities.PRIMARY".equals(violation.getConstraintName()
                 );
             }
 
@@ -420,7 +418,7 @@ public class RoleServiceImpl implements IRoleService {
     /**
      * Validates that the given UUID is not null.
      *
-     * @param uuid      the UUID to validate
+     * @param uuid       the UUID to validate
      * @param entityName the entity name used in the error code and message
      * @throws EntityInvalidArgumentException if the UUID is null
      */
@@ -438,8 +436,10 @@ public class RoleServiceImpl implements IRoleService {
      * @param action the action to execute
      */
     private void afterCommit(Runnable action) {
+
         TransactionSynchronizationManager.registerSynchronization(
                 new TransactionSynchronization() {
+
                     @Override
                     public void afterCommit() {
                         action.run();
