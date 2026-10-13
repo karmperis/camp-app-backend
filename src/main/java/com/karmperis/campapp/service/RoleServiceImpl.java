@@ -312,7 +312,7 @@ public class RoleServiceImpl implements IRoleService {
      * @param roleUuid       the role UUID
      * @param capabilityUuid the capability UUID
      * @throws EntityNotFoundException        if the role or capability does not exist or is already soft-deleted
-     * @throws EntityInvalidArgumentException if the role or capability UUID is null
+     * @throws EntityInvalidArgumentException if either UUID is null or the capability is not assigned to the role
      */
     @Override
     @Transactional(rollbackFor = {EntityNotFoundException.class, EntityInvalidArgumentException.class})
