@@ -12,6 +12,7 @@ import com.karmperis.campapp.mapper.CapabilityMapper;
 import com.karmperis.campapp.mapper.RoleMapper;
 import com.karmperis.campapp.model.Capability;
 import com.karmperis.campapp.model.Role;
+import com.karmperis.campapp.repository.CapabilityRepository;
 import com.karmperis.campapp.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ import java.util.UUID;
 public class RoleServiceImpl implements IRoleService {
     private final RoleRepository roleRepository;
     private final RoleMapper roleMapper;
+    private final CapabilityRepository capabilityRepository;
     private final CapabilityMapper capabilityMapper;
 
     /**
@@ -251,13 +253,95 @@ public class RoleServiceImpl implements IRoleService {
                 .toList();
     }
 
+    /**
+     * Assigns a capability to a role.
+     *
+     * @param roleUuid       the role UUID
+     * @param capabilityUuid the capability UUID
+     * @throws EntityNotFoundException        if the role or capability is not found or is soft-deleted
+     * @throws EntityAlreadyExistsException   if the capability is already assigned to the role
+     * @throws EntityInvalidArgumentException if any of the UUIDs are null
+     */
     @Override
-    public void assignCapabilityToRole(UUID roleUuid, UUID capabilityUuid) throws EntityNotFoundException, EntityAlreadyExistsException, EntityInvalidArgumentException {
+    @Transactional(rollbackFor = {EntityNotFoundException.class, EntityAlreadyExistsException.class, EntityInvalidArgumentException.class})
+    public void assignCapabilityToRole(UUID roleUuid, UUID capabilityUuid)
+            throws EntityNotFoundException, EntityAlreadyExistsException, EntityInvalidArgumentException {
+
+        log.info("Attempting to assign capability with UUID {} to role with UUID {}", capabilityUuid, roleUuid);
+
+        validateUuid(roleUuid, "Role UUID");
+        validateUuid(capabilityUuid, "Capability UUID");
+
+        Role role = roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)
+                .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + roleUuid + " not found"));
+
+        Capability capability = capabilityRepository.findByUuidAndDeletedAtIsNull(capabilityUuid)
+                .orElseThrow(() -> new EntityNotFoundException("Capability", "Capability with UUID " + capabilityUuid + " not found"));
+
+        if (role.hasCapability(capability)) {
+            throw new EntityAlreadyExistsException("Capability", "Capability with UUID " + capabilityUuid + " is already assigned to role with UUID " + roleUuid);
+        }
+        role.addCapability(capability);
+
+        try {
+            roleRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            if (isRoleCapabilityConflict(e)) {
+                throw new EntityAlreadyExistsException("Capability", "Capability with UUID " + capabilityUuid
+                        + " is already assigned to role with UUID " + roleUuid);
+            }
+            throw e;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        log.info("Capability with UUID {} assigned to role with UUID {} successfully", capabilityUuid, roleUuid);
+                    }
+                }
+        );
 
     }
 
+    /**
+     * Removes a capability from a role.
+     *
+     * @param roleUuid       the role UUID
+     * @param capabilityUuid the capability UUID
+     * @throws EntityNotFoundException        if the role or capability does not exist or is already soft-deleted
+     * @throws EntityInvalidArgumentException if the role or capability UUID is null
+     */
     @Override
-    public void removeCapabilityFromRole(UUID roleUuid, UUID capabilityUuid) throws EntityNotFoundException, EntityInvalidArgumentException {
+    @Transactional(rollbackFor = {EntityNotFoundException.class, EntityInvalidArgumentException.class})
+    public void removeCapabilityFromRole(UUID roleUuid, UUID capabilityUuid)
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        log.info("Attempting to remove capability with UUID {} from role with UUID {}", capabilityUuid, roleUuid);
+
+        validateUuid(roleUuid, "Role UUID");
+        validateUuid(capabilityUuid, "Capability UUID");
+
+        Role role = roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)
+                .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + roleUuid + " not found"));
+
+        Capability capability = capabilityRepository.findByUuidAndDeletedAtIsNull(capabilityUuid)
+                .orElseThrow(() -> new EntityNotFoundException("Capability", "Capability with UUID " + capabilityUuid + " not found"));
+
+        if (!role.hasCapability(capability)) {
+            throw new EntityInvalidArgumentException("Capability", "Capability with UUID " + capabilityUuid + " is not assigned to role with UUID " + roleUuid);
+        }
+
+        role.removeCapability(capability);
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        log.info("Capability with UUID {} removed from role with UUID {} successfully", capabilityUuid, roleUuid);
+                    }
+                }
+        );
 
     }
 
@@ -323,6 +407,29 @@ public class RoleServiceImpl implements IRoleService {
 
                 return "uk_roles_name".equals(constraintName)
                         || "roles.uk_roles_name".equals(constraintName);
+            }
+
+            cause = cause.getCause();
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks whether the exception indicates a duplicate role-capability assignment.
+     *
+     * @param exception the exception to inspect
+     * @return true if a duplicate assignment is identified, false otherwise
+     */
+    private boolean isRoleCapabilityConflict(Throwable exception) {
+        Throwable cause = exception;
+
+        while (cause != null) {
+            if (cause instanceof org.hibernate.exception.ConstraintViolationException violation) {
+                return violation.getErrorCode() == 1062
+                        && "roles_capabilities.PRIMARY".equals(
+                        violation.getConstraintName()
+                );
             }
 
             cause = cause.getCause();
