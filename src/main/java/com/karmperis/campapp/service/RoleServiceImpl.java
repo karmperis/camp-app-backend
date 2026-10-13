@@ -8,7 +8,9 @@ import com.karmperis.campapp.dto.CapabilityReadOnlyDTO;
 import com.karmperis.campapp.dto.RoleEditDTO;
 import com.karmperis.campapp.dto.RoleInsertDTO;
 import com.karmperis.campapp.dto.RoleReadOnlyDTO;
+import com.karmperis.campapp.mapper.CapabilityMapper;
 import com.karmperis.campapp.mapper.RoleMapper;
+import com.karmperis.campapp.model.Capability;
 import com.karmperis.campapp.model.Role;
 import com.karmperis.campapp.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -32,6 +35,7 @@ import java.util.UUID;
 public class RoleServiceImpl implements IRoleService {
     private final RoleRepository roleRepository;
     private final RoleMapper roleMapper;
+    private final CapabilityMapper capabilityMapper;
 
     /**
      * Saves a new role.
@@ -257,9 +261,33 @@ public class RoleServiceImpl implements IRoleService {
 
     }
 
+    /**
+     * Finds all non-soft-deleted capabilities assigned to a non-soft-deleted role,
+     * ordered by name in ascending order.
+     *
+     * @param roleUuid the role UUID
+     * @return the capability data transfer objects, or an empty list if none are available
+     * @throws EntityNotFoundException        if the role does not exist or is already soft-deleted
+     * @throws EntityInvalidArgumentException if the role UUID is null
+     */
     @Override
-    public List<CapabilityReadOnlyDTO> findCapabilitiesByRoleUuid(UUID roleUuid) throws EntityNotFoundException, EntityInvalidArgumentException {
-        return List.of();
+    @Transactional(readOnly = true)
+    public List<CapabilityReadOnlyDTO> findCapabilitiesByRoleUuid(UUID roleUuid)
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        log.info("Attempting to find capabilities for role with UUID: {}", roleUuid);
+
+        validateUuid(roleUuid, "Role UUID");
+
+        Role role = roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)
+                .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + roleUuid + " not found"));
+
+        return role.getAllCapabilities()
+                .stream()
+                .filter(capability -> capability.getDeletedAt() == null)
+                .sorted(Comparator.comparing(Capability::getName))
+                .map(capabilityMapper::mapToCapabilityReadOnlyDTO)
+                .toList();
     }
 
     /**
