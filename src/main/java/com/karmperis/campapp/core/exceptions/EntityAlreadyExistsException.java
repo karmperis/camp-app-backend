@@ -8,7 +8,7 @@ public class EntityAlreadyExistsException extends AppGenericException {
     private static final String CODE_SUFFIX = "AlreadyExists";
 
     /**
-     * Create a new exception for an "already exists" error.
+     * Creates a new exception for an "already exists" error.
      *
      * @param code    base application error code/prefix
      * @param message readable error message
