@@ -74,8 +74,6 @@ public class RoleServiceImpl implements IRoleService {
                 throw e;
             }
 
-            log.warn("Role creation rejected due to a duplicate name: {}", dto.name());
-
             throw new EntityAlreadyExistsException("Role", "Role with name " + dto.name() + " already exists");
         }
 
