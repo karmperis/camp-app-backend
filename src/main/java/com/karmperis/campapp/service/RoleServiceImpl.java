@@ -108,7 +108,7 @@ public class RoleServiceImpl implements IRoleService {
 
         log.info("Attempting to find role by UUID: {}", uuid);
 
-        validateUuid(uuid, "Role UUID");
+        validateUuid(uuid, "Role");
 
         return roleRepository.findByUuidAndDeletedAtIsNull(uuid)
                 .map(roleMapper::mapToRoleReadOnlyDTO)
@@ -151,7 +151,7 @@ public class RoleServiceImpl implements IRoleService {
 
         log.info("Updating role with UUID: {}", uuid);
 
-        validateUuid(uuid, "Role UUID");
+        validateUuid(uuid, "Role");
 
         if (dto == null) {
             throw new EntityInvalidArgumentException("Role", "Role data cannot be null");
@@ -211,7 +211,7 @@ public class RoleServiceImpl implements IRoleService {
 
         log.info("Attempting to soft-delete role with UUID: {}", uuid);
 
-        validateUuid(uuid, "Role UUID");
+        validateUuid(uuid, "Role");
 
         Role role = roleRepository.findByUuidAndDeletedAtIsNull(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + uuid + " not found"));
@@ -269,8 +269,8 @@ public class RoleServiceImpl implements IRoleService {
 
         log.info("Attempting to assign capability with UUID {} to role with UUID {}", capabilityUuid, roleUuid);
 
-        validateUuid(roleUuid, "Role UUID");
-        validateUuid(capabilityUuid, "Capability UUID");
+        validateUuid(roleUuid, "Role");
+        validateUuid(capabilityUuid, "Capability");
 
         Role role = roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)
                 .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + roleUuid + " not found"));
@@ -319,8 +319,8 @@ public class RoleServiceImpl implements IRoleService {
 
         log.info("Attempting to remove capability with UUID {} from role with UUID {}", capabilityUuid, roleUuid);
 
-        validateUuid(roleUuid, "Role UUID");
-        validateUuid(capabilityUuid, "Capability UUID");
+        validateUuid(roleUuid, "Role");
+        validateUuid(capabilityUuid, "Capability");
 
         Role role = roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)
                 .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + roleUuid + " not found"));
@@ -361,7 +361,7 @@ public class RoleServiceImpl implements IRoleService {
 
         log.info("Attempting to find capabilities for role with UUID: {}", roleUuid);
 
-        validateUuid(roleUuid, "Role UUID");
+        validateUuid(roleUuid, "Role");
 
         Role role = roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)
                 .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + roleUuid + " not found"));
@@ -442,13 +442,14 @@ public class RoleServiceImpl implements IRoleService {
      * Validates that the given UUID is not null.
      *
      * @param uuid      the UUID to validate
-     * @param fieldName the name of the field being validated
+     * @param entityName the entity name used in the error code and message
      * @throws EntityInvalidArgumentException if the UUID is null
      */
-    private void validateUuid(UUID uuid, String fieldName)
+    private void validateUuid(UUID uuid, String entityName)
             throws EntityInvalidArgumentException {
+
         if (uuid == null) {
-            throw new EntityInvalidArgumentException("Role", fieldName + " cannot be null");
+            throw new EntityInvalidArgumentException(entityName, entityName + " UUID cannot be null");
         }
     }
 }
