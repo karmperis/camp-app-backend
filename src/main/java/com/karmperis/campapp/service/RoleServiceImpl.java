@@ -34,6 +34,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class RoleServiceImpl implements IRoleService {
+    private static final Set<String> BUILT_IN_ROLES = Set.of("ADMIN", "GUARDIAN", "LEADER");
     private final RoleRepository roleRepository;
     private final RoleMapper roleMapper;
     private final CapabilityRepository capabilityRepository;
@@ -160,7 +161,7 @@ public class RoleServiceImpl implements IRoleService {
         Role role = roleRepository.findByUuidAndDeletedAtIsNull(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + uuid + " not found"));
 
-        if (Set.of("ADMIN", "GUARDIAN", "LEADER").contains(role.getName()) && !role.getName().equals(dto.name())) {
+        if (BUILT_IN_ROLES.contains(role.getName())) {
             throw new OperationNotAllowedException("Role", "Built-in roles cannot be renamed."
             );
         }
@@ -214,7 +215,7 @@ public class RoleServiceImpl implements IRoleService {
         Role role = roleRepository.findByUuidAndDeletedAtIsNull(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + uuid + " not found"));
 
-        if (Set.of("ADMIN", "GUARDIAN", "LEADER").contains(role.getName())) {
+        if (BUILT_IN_ROLES.contains(role.getName())) {
             throw new OperationNotAllowedException("Role", "Built-in roles cannot be deleted.");
         }
 
