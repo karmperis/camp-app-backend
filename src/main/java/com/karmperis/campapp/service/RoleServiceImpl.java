@@ -96,6 +96,7 @@ public class RoleServiceImpl implements IRoleService {
      * @throws EntityInvalidArgumentException if the UUID is null
      */
     @Override
+    @Transactional(readOnly = true)
     public RoleReadOnlyDTO findRoleByUuid(UUID uuid)
             throws EntityNotFoundException, EntityInvalidArgumentException {
 
@@ -189,8 +190,44 @@ public class RoleServiceImpl implements IRoleService {
         return roleMapper.mapToRoleReadOnlyDTO(updatedRole);
     }
 
+    /**
+     * Soft-deletes a role by its UUID.
+     *
+     * @param uuid the UUID of the role to soft-delete
+     * @throws EntityNotFoundException        if the role does not exist or is already soft-deleted
+     * @throws EntityInvalidArgumentException if the UUID is null
+     * @throws OperationNotAllowedException   if the role is a built-in role
+     */
     @Override
-    public void softDeleteRoleByUuid(UUID uuid) throws EntityNotFoundException, EntityInvalidArgumentException, OperationNotAllowedException {
+    @Transactional(rollbackFor = {EntityNotFoundException.class, EntityInvalidArgumentException.class, OperationNotAllowedException.class})
+    public void softDeleteRoleByUuid(UUID uuid)
+            throws EntityNotFoundException, EntityInvalidArgumentException, OperationNotAllowedException {
+
+        log.info("Attempting to soft-delete role with UUID: {}", uuid);
+
+        validateUuid(uuid, "Role UUID");
+
+        Role role = roleRepository.findByUuidAndDeletedAtIsNull(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + uuid + " not found"));
+
+        if (Set.of("ADMIN", "GUARDIAN", "LEADER").contains(role.getName())) {
+            throw new OperationNotAllowedException("Role", "Built-in roles cannot be deleted.");
+        }
+
+        // TODO: Reject deletion if the role is assigned to any user,
+        // including inactive and soft-deleted users, once UserRepository is available.
+        // For now, we'll just proceed with the deletion.
+        role.softDelete();
+        roleRepository.saveAndFlush(role);
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        log.info("Role with UUID {} soft-deleted successfully", uuid);
+                    }
+                }
+        );
 
     }
 
