@@ -118,9 +118,40 @@ public class CapabilityServiceImpl implements ICapabilityService {
                 .toList();
     }
 
+    /**
+     * Updates a non-soft-deleted capability by its UUID, description only.
+     *
+     * @param uuid the UUID of the capability to update
+     * @param dto  the data transfer object containing the updated capability information
+     * @return the updated capability
+     * @throws EntityNotFoundException        if the capability does not exist or is soft-deleted
+     * @throws EntityInvalidArgumentException if the UUID or DTO is null or the description exceeds 255 characters
+     */
     @Override
-    public CapabilityReadOnlyDTO updateCapability(UUID uuid, CapabilityEditDTO dto) throws EntityNotFoundException, EntityInvalidArgumentException {
-        return null;
+    @Transactional(rollbackFor = {EntityNotFoundException.class, EntityInvalidArgumentException.class})
+    public CapabilityReadOnlyDTO updateCapability(UUID uuid, CapabilityEditDTO dto)
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        log.info("Updating capability description with UUID: {}", uuid);
+
+        validateCapabilityUuid(uuid);
+
+        if (dto == null) {
+            throw new EntityInvalidArgumentException("Capability", "Capability data cannot be null");
+        }
+
+        validateCapabilityDescription(dto.description());
+
+        Capability capability = capabilityRepository.findByUuidAndDeletedAtIsNull(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("Capability", "Capability with UUID " + uuid + " not found"));
+
+        capabilityMapper.updateCapabilityFromDTO(dto, capability);
+
+        afterCommit(() ->
+                log.info("Capability description updated successfully with UUID: {}", uuid)
+        );
+
+        return capabilityMapper.mapToCapabilityReadOnlyDTO(capability);
     }
 
     @Override
