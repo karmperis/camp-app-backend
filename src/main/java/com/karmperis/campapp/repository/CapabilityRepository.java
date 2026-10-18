@@ -14,7 +14,7 @@ import java.util.UUID;
 public interface CapabilityRepository extends JpaRepository<Capability, Long> {
 
     /**
-     * Finds a non soft-deleted capability by its UUID.
+     * Finds a non-soft-deleted capability by its UUID.
      *
      * @param uuid The UUID of the capability to find
      * @return An optional containing the capability if found and not soft-deleted
@@ -22,7 +22,7 @@ public interface CapabilityRepository extends JpaRepository<Capability, Long> {
     Optional<Capability> findByUuidAndDeletedAtIsNull(UUID uuid);
 
     /**
-     * Finds a non soft-deleted capability by its name.
+     * Finds a non-soft-deleted capability by its name.
      *
      * @param name The name of the capability to find
      * @return An optional containing the capability if found and not soft-deleted
@@ -30,9 +30,9 @@ public interface CapabilityRepository extends JpaRepository<Capability, Long> {
     Optional<Capability> findByNameAndDeletedAtIsNull(String name);
 
     /**
-     * Finds all non soft-deleted capabilities, ordered by name in ascending order.
+     * Finds all non-soft-deleted capabilities, ordered by name in ascending order.
      *
-     * @return A list of all non soft-deleted capabilities, ordered by name in ascending order
+     * @return A list of all non-soft-deleted capabilities, ordered by name in ascending order
      */
     List<Capability> findAllByDeletedAtIsNullOrderByNameAsc();
 
