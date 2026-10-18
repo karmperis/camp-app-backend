@@ -79,9 +79,26 @@ public class CapabilityServiceImpl implements ICapabilityService {
         return capabilityMapper.mapToCapabilityReadOnlyDTO(savedCapability);
     }
 
+    /**
+     * Finds a non-soft-deleted capability by its UUID.
+     *
+     * @param uuid the UUID of the capability to find
+     * @return the found capability
+     * @throws EntityNotFoundException        if the capability is not found
+     * @throws EntityInvalidArgumentException if the UUID is null
+     */
     @Override
-    public CapabilityReadOnlyDTO findCapabilityByUuid(UUID uuid) throws EntityNotFoundException, EntityInvalidArgumentException {
-        return null;
+    @Transactional(readOnly = true)
+    public CapabilityReadOnlyDTO findCapabilityByUuid(UUID uuid)
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        log.info("Attempting to find capability by UUID: {}", uuid);
+
+        validateCapabilityUuid(uuid);
+
+        return capabilityRepository.findByUuidAndDeletedAtIsNull(uuid)
+                .map(capabilityMapper::mapToCapabilityReadOnlyDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Capability", "Capability with UUID " + uuid + " not found"));
     }
 
     @Override
