@@ -10,6 +10,8 @@ import com.karmperis.campapp.dto.CapabilityReadOnlyDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.UUID;
@@ -79,5 +81,23 @@ public class CapabilityServiceImpl implements ICapabilityService {
         if (description != null && description.length() > 255) {
             throw new EntityInvalidArgumentException("Capability", "Capability description cannot exceed 255 characters");
         }
+    }
+
+    /**
+     * Registers an action to run after a successful transaction commit.
+     *
+     * @param action the action to execute
+     */
+    private void afterCommit(Runnable action) {
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+
+                    @Override
+                    public void afterCommit() {
+                        action.run();
+                    }
+                }
+        );
     }
 }
