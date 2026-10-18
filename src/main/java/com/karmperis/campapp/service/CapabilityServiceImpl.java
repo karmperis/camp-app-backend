@@ -7,9 +7,14 @@ import com.karmperis.campapp.core.exceptions.OperationNotAllowedException;
 import com.karmperis.campapp.dto.CapabilityEditDTO;
 import com.karmperis.campapp.dto.CapabilityInsertDTO;
 import com.karmperis.campapp.dto.CapabilityReadOnlyDTO;
+import com.karmperis.campapp.mapper.CapabilityMapper;
+import com.karmperis.campapp.model.Capability;
+import com.karmperis.campapp.repository.CapabilityRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -23,9 +28,55 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class CapabilityServiceImpl implements ICapabilityService {
+    private final CapabilityRepository capabilityRepository;
+    private final CapabilityMapper capabilityMapper;
+
+    /**
+     * Saves a new capability.
+     *
+     * @param dto the data transfer object containing the capability information
+     * @return the saved capability
+     * @throws EntityAlreadyExistsException   if a capability with the same name already exists, including a soft-deleted capability
+     * @throws EntityInvalidArgumentException if the capability data is invalid
+     */
     @Override
-    public CapabilityReadOnlyDTO saveCapability(CapabilityInsertDTO dto) throws EntityAlreadyExistsException, EntityInvalidArgumentException {
-        return null;
+    @Transactional(rollbackFor = {EntityAlreadyExistsException.class, EntityInvalidArgumentException.class})
+    public CapabilityReadOnlyDTO saveCapability(CapabilityInsertDTO dto)
+            throws EntityAlreadyExistsException, EntityInvalidArgumentException {
+
+        if (dto == null) {
+            throw new EntityInvalidArgumentException("Capability", "Capability data cannot be null");
+        }
+
+        validateCapabilityName(dto.name());
+        validateCapabilityDescription(dto.description());
+
+        log.info("Attempting to save new capability with name: {} and description: {}", dto.name(), dto.description());
+
+        if (capabilityRepository.existsByName(dto.name())) {
+            throw new EntityAlreadyExistsException("Capability", "Capability with name " + dto.name() + " already exists");
+        }
+
+        Capability capability = capabilityMapper.mapToCapabilityEntity(dto);
+        Capability savedCapability;
+
+        try {
+            savedCapability = capabilityRepository.saveAndFlush(capability);
+        } catch (DataIntegrityViolationException e) {
+            if (isCapabilityNameConflict(e)) {
+                throw new EntityAlreadyExistsException("Capability", "Capability with name " + dto.name() + " already exists");
+            }
+
+            throw e;
+        }
+
+        UUID capabilityUuid = savedCapability.getUuid();
+
+        afterCommit(() ->
+                log.info("Capability saved successfully with UUID: {}", capabilityUuid)
+        );
+
+        return capabilityMapper.mapToCapabilityReadOnlyDTO(savedCapability);
     }
 
     @Override
