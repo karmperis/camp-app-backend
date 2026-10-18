@@ -128,9 +128,20 @@ public class CapabilityServiceImpl implements ICapabilityService {
 
     }
 
+    /**
+     * Finds all soft-deleted capabilities, ordered by name in ascending order.
+     *
+     * @return the capability data transfer objects, or an empty list if none are found
+     */
     @Override
+    @Transactional(readOnly = true)
     public List<CapabilityReadOnlyDTO> findAllSoftDeletedCapabilities() {
-        return List.of();
+        log.info("Attempting to find all soft-deleted capabilities.");
+
+        return capabilityRepository.findAllByDeletedAtIsNotNullOrderByNameAsc()
+                .stream()
+                .map(capabilityMapper::mapToCapabilityReadOnlyDTO)
+                .toList();
     }
 
     /**
