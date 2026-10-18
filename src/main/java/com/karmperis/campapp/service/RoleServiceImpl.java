@@ -88,7 +88,7 @@ public class RoleServiceImpl implements IRoleService {
     }
 
     /**
-     * Finds a non soft-deleted role by its UUID.
+     * Finds a non-soft-deleted role by its UUID.
      *
      * @param uuid the UUID of the role to find
      * @return the found role
@@ -135,7 +135,7 @@ public class RoleServiceImpl implements IRoleService {
      * @throws EntityNotFoundException        if the role does not exist or is soft-deleted
      * @throws EntityAlreadyExistsException   if the name is used by another role, including a soft-deleted role
      * @throws EntityInvalidArgumentException if the UUID or DTO is null or the role name is invalid
-     * @throws OperationNotAllowedException   if a built-in role would be renamed
+     * @throws OperationNotAllowedException   if a built-in role is renamed
      */
     @Override
     @Transactional(rollbackFor = {EntityNotFoundException.class, EntityAlreadyExistsException.class,
@@ -243,7 +243,7 @@ public class RoleServiceImpl implements IRoleService {
      * Assigns a capability to a role.
      *
      * @param roleUuid       the role UUID
-     * @param capabilityUuid the capability UUID
+     * @param capabilityUuid the capability of UUID
      * @throws EntityNotFoundException        if the role or capability is not found or is soft-deleted
      * @throws EntityAlreadyExistsException   if the capability is already assigned to the role
      * @throws EntityInvalidArgumentException if any of the UUIDs are null
@@ -291,7 +291,7 @@ public class RoleServiceImpl implements IRoleService {
      * Removes a capability from a role.
      *
      * @param roleUuid       the role UUID
-     * @param capabilityUuid the capability UUID
+     * @param capabilityUuid the capability of UUID
      * @throws EntityNotFoundException        if the role or capability does not exist or is already soft-deleted
      * @throws EntityInvalidArgumentException if either UUID is null or the capability is not assigned to the role
      */
