@@ -1,7 +1,11 @@
 package com.karmperis.campapp.repository;
 
 import com.karmperis.campapp.model.Capability;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,4 +54,14 @@ public interface CapabilityRepository extends JpaRepository<Capability, Long> {
      * @return true if the name is already used, false otherwise
      */
     boolean existsByName(String name);
+
+    /**
+     * Finds a capability by its UUID and acquires a pessimistic write lock.
+     *
+     * @param uuid the capability UUID
+     * @return the capability, or an empty optional if it does not exist
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT capability FROM Capability capability WHERE capability.uuid = :uuid")
+    Optional<Capability> findByUuidForUpdate(@Param("uuid") UUID uuid);
 }

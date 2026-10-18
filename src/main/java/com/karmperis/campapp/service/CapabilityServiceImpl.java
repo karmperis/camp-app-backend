@@ -172,8 +172,12 @@ public class CapabilityServiceImpl implements ICapabilityService {
 
         validateCapabilityUuid(uuid);
 
-        Capability capability = capabilityRepository.findByUuidAndDeletedAtIsNull(uuid)
+        Capability capability = capabilityRepository.findByUuidForUpdate(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Capability", "Capability with UUID " + uuid + " not found"));
+
+        if (capability.getDeletedAt() != null) {
+            throw new EntityNotFoundException("Capability", "Capability with UUID " + uuid + " not found");
+        }
 
         if (!capability.getAllRoles().isEmpty()) {
             throw new OperationNotAllowedException("Capability", "Capabilities assigned to roles cannot be deleted.");
@@ -195,6 +199,7 @@ public class CapabilityServiceImpl implements ICapabilityService {
     @Override
     @Transactional(readOnly = true)
     public List<CapabilityReadOnlyDTO> findAllSoftDeletedCapabilities() {
+
         log.info("Attempting to find all soft-deleted capabilities.");
 
         return capabilityRepository.findAllByDeletedAtIsNotNullOrderByNameAsc()

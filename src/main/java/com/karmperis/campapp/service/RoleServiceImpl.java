@@ -243,7 +243,7 @@ public class RoleServiceImpl implements IRoleService {
      * Assigns a capability to a role.
      *
      * @param roleUuid       the role UUID
-     * @param capabilityUuid the capability of UUID
+     * @param capabilityUuid the capability UUID
      * @throws EntityNotFoundException        if the role or capability is not found or is soft-deleted
      * @throws EntityAlreadyExistsException   if the capability is already assigned to the role
      * @throws EntityInvalidArgumentException if any of the UUIDs are null
@@ -258,11 +258,15 @@ public class RoleServiceImpl implements IRoleService {
         validateUuid(roleUuid, "Role");
         validateUuid(capabilityUuid, "Capability");
 
+        Capability capability = capabilityRepository.findByUuidForUpdate(capabilityUuid)
+                .orElseThrow(() -> new EntityNotFoundException("Capability", "Capability with UUID " + capabilityUuid + " not found"));
+
+        if (capability.getDeletedAt() != null) {
+            throw new EntityNotFoundException("Capability", "Capability with UUID " + capabilityUuid + " not found");
+        }
+
         Role role = roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)
                 .orElseThrow(() -> new EntityNotFoundException("Role", "Role with UUID " + roleUuid + " not found"));
-
-        Capability capability = capabilityRepository.findByUuidAndDeletedAtIsNull(capabilityUuid)
-                .orElseThrow(() -> new EntityNotFoundException("Capability", "Capability with UUID " + capabilityUuid + " not found"));
 
         if (role.hasCapability(capability)) {
             throw new EntityAlreadyExistsException("Capability", "Capability with UUID " + capabilityUuid + " is already assigned to role with UUID " + roleUuid);
