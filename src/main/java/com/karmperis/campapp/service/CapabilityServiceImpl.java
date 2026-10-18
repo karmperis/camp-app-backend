@@ -84,6 +84,28 @@ public class CapabilityServiceImpl implements ICapabilityService {
     }
 
     /**
+     * Checks if the given exception is a capability name conflict.
+     *
+     * @param exception the exception to check
+     * @return true if the exception is a capability name conflict, false otherwise
+     */
+    private boolean isCapabilityNameConflict(Throwable exception) {
+        Throwable cause = exception;
+
+        while (cause != null) {
+            if (cause instanceof org.hibernate.exception.ConstraintViolationException violation) {
+                String constraintName = violation.getConstraintName();
+
+                return "uk_capabilities_name".equals(constraintName) || "capabilities.uk_capabilities_name".equals(constraintName);
+            }
+
+            cause = cause.getCause();
+        }
+
+        return false;
+    }
+
+    /**
      * Registers an action to run after a successful transaction commit.
      *
      * @param action the action to execute
