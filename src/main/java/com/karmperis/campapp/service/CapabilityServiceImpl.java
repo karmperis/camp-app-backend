@@ -154,9 +154,37 @@ public class CapabilityServiceImpl implements ICapabilityService {
         return capabilityMapper.mapToCapabilityReadOnlyDTO(capability);
     }
 
+    /**
+     * Soft-deletes a capability by its UUID.
+     *
+     * @param uuid the UUID of the capability to soft-delete
+     * @throws EntityNotFoundException        if the capability does not exist or is already soft-deleted
+     * @throws EntityInvalidArgumentException if the UUID is null
+     * @throws OperationNotAllowedException   if the capability is assigned to any role, including a soft-deleted role
+     */
     @Override
-    public void softDeleteCapabilityByUuid(UUID uuid) throws EntityNotFoundException, EntityInvalidArgumentException, OperationNotAllowedException {
+    @Transactional(rollbackFor = {EntityNotFoundException.class, EntityInvalidArgumentException.class,
+            OperationNotAllowedException.class})
+    public void softDeleteCapabilityByUuid(UUID uuid)
+            throws EntityNotFoundException, EntityInvalidArgumentException, OperationNotAllowedException {
 
+        log.info("Attempting to soft-delete capability with UUID: {}", uuid);
+
+        validateCapabilityUuid(uuid);
+
+        Capability capability = capabilityRepository.findByUuidAndDeletedAtIsNull(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("Capability", "Capability with UUID " + uuid + " not found"));
+
+        if (!capability.getAllRoles().isEmpty()) {
+            throw new OperationNotAllowedException("Capability", "Capabilities assigned to roles cannot be deleted.");
+        }
+
+        capability.softDelete();
+        capabilityRepository.save(capability);
+
+        afterCommit(() ->
+                log.info("Capability soft-deleted successfully with UUID: {}", uuid)
+        );
     }
 
     /**
