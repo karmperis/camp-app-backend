@@ -365,9 +365,7 @@ public class RoleServiceImpl implements IRoleService {
             throw new EntityInvalidArgumentException("Role", "Role name cannot be blank");
         }
 
-        int nameLength = name.length();
-
-        if (nameLength < 4 || nameLength > 50) {
+        if (name.length() < 4 || name.length() > 50) {
             throw new EntityInvalidArgumentException("Role", "Role name must contain between 4 and 50 characters");
         }
     }
