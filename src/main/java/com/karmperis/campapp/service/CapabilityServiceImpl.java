@@ -135,6 +135,19 @@ public class CapabilityServiceImpl implements ICapabilityService {
     }
 
     /**
+     * Validates that the given UUID is not null.
+     *
+     * @param uuid the capability UUID to validate
+     * @throws EntityInvalidArgumentException if the UUID is null
+     */
+    private void validateCapabilityUuid(UUID uuid) throws EntityInvalidArgumentException {
+
+        if (uuid == null) {
+            throw new EntityInvalidArgumentException("Capability", "Capability UUID cannot be null");
+        }
+    }
+
+    /**
      * Checks if the given exception is a capability name conflict.
      *
      * @param exception the exception to check
