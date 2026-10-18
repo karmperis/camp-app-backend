@@ -101,9 +101,21 @@ public class CapabilityServiceImpl implements ICapabilityService {
                 .orElseThrow(() -> new EntityNotFoundException("Capability", "Capability with UUID " + uuid + " not found"));
     }
 
+    /**
+     * Finds all non-soft-deleted capabilities, ordered by name in ascending order.
+     *
+     * @return the capability data transfer objects, or an empty list if none are found
+     */
     @Override
+    @Transactional(readOnly = true)
     public List<CapabilityReadOnlyDTO> findAllCapabilities() {
-        return List.of();
+
+        log.info("Attempting to find all not deleted capabilities.");
+
+        return capabilityRepository.findAllByDeletedAtIsNullOrderByNameAsc()
+                .stream()
+                .map(capabilityMapper::mapToCapabilityReadOnlyDTO)
+                .toList();
     }
 
     @Override
