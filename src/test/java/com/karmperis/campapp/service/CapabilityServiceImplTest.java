@@ -7,6 +7,9 @@ import com.karmperis.campapp.repository.CapabilityRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -37,6 +40,21 @@ public class CapabilityServiceImplTest {
     void saveCapability_whenDtoIsNull_shouldThrowEntityInvalidArgumentException() {
 
         CapabilityInsertDTO dto = null;
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> capabilityService.saveCapability(dto));
+
+        assertEquals("CapabilityInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "   ", "\t", "\n"})
+    void saveCapability_whenNameIsNullOrBlank_shouldThrowEntityInvalidArgumentException(String name) {
+
+        CapabilityInsertDTO dto = new CapabilityInsertDTO(name, "Allows viewing applications");
 
         EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
                 () -> capabilityService.saveCapability(dto));
