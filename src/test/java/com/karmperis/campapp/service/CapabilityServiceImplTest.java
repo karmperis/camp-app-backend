@@ -63,4 +63,19 @@ public class CapabilityServiceImplTest {
 
         verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
+
+    @ParameterizedTest
+    @ValueSource(ints = {3, 101})
+    void saveCapability_whenNameLengthIsOutOfBounds_shouldThrowEntityInvalidArgumentException(int length) {
+
+        String name = "A".repeat(length);
+        CapabilityInsertDTO dto = new CapabilityInsertDTO(name, "Allows viewing applications");
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> capabilityService.saveCapability(dto));
+
+        assertEquals("CapabilityInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
 }
