@@ -78,4 +78,17 @@ public class CapabilityServiceImplTest {
 
         verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void saveCapability_whenDescriptionExceedsMaxLength_shouldThrowEntityInvalidArgumentException() {
+
+        CapabilityInsertDTO dto = new CapabilityInsertDTO("APPLICATION_READ", "A".repeat(256));
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> capabilityService.saveCapability(dto));
+
+        assertEquals("CapabilityInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
 }
