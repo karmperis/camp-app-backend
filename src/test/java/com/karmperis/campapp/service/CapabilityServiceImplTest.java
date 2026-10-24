@@ -6,6 +6,7 @@ import com.karmperis.campapp.dto.CapabilityInsertDTO;
 import com.karmperis.campapp.mapper.CapabilityMapper;
 import com.karmperis.campapp.model.Capability;
 import com.karmperis.campapp.repository.CapabilityRepository;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+
+import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -127,6 +130,35 @@ public class CapabilityServiceImplTest {
                 () -> capabilityService.saveCapability(dto));
 
         assertSame(databaseException, exception);
+
+        verify(capabilityRepository).existsByName(dto.name());
+        verify(capabilityMapper).mapToCapabilityEntity(dto);
+        verify(capabilityRepository).saveAndFlush(capability);
+
+        verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"uk_capabilities_name", "capabilities.uk_capabilities_name"})
+    void saveCapability_whenNameConstraintIsViolated_shouldThrowEntityAlreadyExistsException(String constraintName) {
+
+        CapabilityInsertDTO dto = new CapabilityInsertDTO("APPLICATION_READ", "Allows viewing applications");
+
+        Capability capability = new Capability();
+
+        SQLException sqlException = new SQLException("Duplicate entry", "23000", 1062);
+
+        ConstraintViolationException constraintException = new ConstraintViolationException("Duplicate capability name", sqlException, constraintName);
+
+        DataIntegrityViolationException databaseException = new DataIntegrityViolationException("Could not save capability", constraintException);
+
+        when(capabilityRepository.existsByName(dto.name())).thenReturn(false);
+
+        when(capabilityMapper.mapToCapabilityEntity(dto)).thenReturn(capability);
+
+        when(capabilityRepository.saveAndFlush(capability)).thenThrow(databaseException);
+
+        assertThrows(EntityAlreadyExistsException.class, () -> capabilityService.saveCapability(dto));
 
         verify(capabilityRepository).existsByName(dto.name());
         verify(capabilityMapper).mapToCapabilityEntity(dto);
