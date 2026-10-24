@@ -1,5 +1,6 @@
 package com.karmperis.campapp.service;
 
+import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
 import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
 import com.karmperis.campapp.dto.CapabilityInsertDTO;
 import com.karmperis.campapp.mapper.CapabilityMapper;
@@ -15,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link CapabilityServiceImpl}.
@@ -90,5 +91,19 @@ public class CapabilityServiceImplTest {
         assertEquals("CapabilityInvalidArgument", exception.getCode());
 
         verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
+
+    @Test
+    void saveCapability_whenNameAlreadyExists_shouldThrowEntityAlreadyExistsException() {
+
+        CapabilityInsertDTO dto = new CapabilityInsertDTO("APPLICATION_READ", "Allows viewing applications");
+
+        when(capabilityRepository.existsByName(dto.name())).thenReturn(true);
+
+        assertThrows(EntityAlreadyExistsException.class, () -> capabilityService.saveCapability(dto));
+
+        verify(capabilityRepository).existsByName(dto.name());
+        verifyNoMoreInteractions(capabilityRepository);
+        verifyNoInteractions(capabilityMapper);
     }
 }
