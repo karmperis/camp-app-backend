@@ -8,7 +8,7 @@ public class EntityNotFoundException extends AppGenericException {
     private static final String CODE_SUFFIX = "NotFound";
 
     /**
-     * Create a new exception for a "not found" error.
+     * Creates a new exception for a "not found" error.
      *
      * @param code    base application error code/prefix
      * @param message readable error message

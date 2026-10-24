@@ -1,7 +1,11 @@
 package com.karmperis.campapp.repository;
 
 import com.karmperis.campapp.model.Capability;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,7 +18,7 @@ import java.util.UUID;
 public interface CapabilityRepository extends JpaRepository<Capability, Long> {
 
     /**
-     * Finds a non soft-deleted capability by its UUID.
+     * Finds a non-soft-deleted capability by its UUID.
      *
      * @param uuid The UUID of the capability to find
      * @return An optional containing the capability if found and not soft-deleted
@@ -22,7 +26,7 @@ public interface CapabilityRepository extends JpaRepository<Capability, Long> {
     Optional<Capability> findByUuidAndDeletedAtIsNull(UUID uuid);
 
     /**
-     * Finds a non soft-deleted capability by its name.
+     * Finds a non-soft-deleted capability by its name.
      *
      * @param name The name of the capability to find
      * @return An optional containing the capability if found and not soft-deleted
@@ -30,18 +34,18 @@ public interface CapabilityRepository extends JpaRepository<Capability, Long> {
     Optional<Capability> findByNameAndDeletedAtIsNull(String name);
 
     /**
-     * Finds all non soft-deleted capabilities, ordered by name in ascending order.
+     * Finds all non-soft-deleted capabilities, ordered by name in ascending order.
      *
-     * @return A list of all non soft-deleted capabilities, ordered by name in ascending order
+     * @return A list of all non-soft-deleted capabilities, ordered by name in ascending order
      */
-    List<Capability> findAllByAndDeletedAtIsNullOrderByNameAsc();
+    List<Capability> findAllByDeletedAtIsNullOrderByNameAsc();
 
     /**
      * Finds all soft-deleted capabilities, ordered by name in ascending order.
      *
      * @return A list of all soft-deleted capabilities, ordered by name in ascending order
      */
-    List<Capability> findAllByAndDeletedAtIsNotNullOrderByNameAsc();
+    List<Capability> findAllByDeletedAtIsNotNullOrderByNameAsc();
 
     /**
      * Checks whether a capability name is already used, including soft-deleted capabilities.
@@ -50,4 +54,14 @@ public interface CapabilityRepository extends JpaRepository<Capability, Long> {
      * @return true if the name is already used, false otherwise
      */
     boolean existsByName(String name);
+
+    /**
+     * Finds a capability by its UUID and acquires a pessimistic write lock.
+     *
+     * @param uuid the capability UUID
+     * @return the capability, or an empty optional if it does not exist
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT capability FROM Capability capability WHERE capability.uuid = :uuid")
+    Optional<Capability> findByUuidForUpdate(@Param("uuid") UUID uuid);
 }
