@@ -3,6 +3,7 @@ package com.karmperis.campapp.service;
 import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
 import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
 import com.karmperis.campapp.dto.CapabilityInsertDTO;
+import com.karmperis.campapp.dto.CapabilityReadOnlyDTO;
 import com.karmperis.campapp.mapper.CapabilityMapper;
 import com.karmperis.campapp.model.Capability;
 import com.karmperis.campapp.repository.CapabilityRepository;
@@ -16,6 +17,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.sql.SQLException;
 
@@ -165,5 +167,47 @@ public class CapabilityServiceImplTest {
         verify(capabilityRepository).saveAndFlush(capability);
 
         verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
+    }
+
+    @Test
+    void saveCapability_whenDataIsValid_shouldReturnSavedCapability()
+            throws EntityAlreadyExistsException, EntityInvalidArgumentException {
+
+        CapabilityInsertDTO dto = new CapabilityInsertDTO("APPLICATION_READ", "Allows viewing applications");
+
+        Capability capability = new Capability();
+        capability.setName(dto.name());
+        capability.setDescription(dto.description());
+
+        CapabilityReadOnlyDTO expected = new CapabilityReadOnlyDTO(
+                capability.getUuid(),
+                capability.getName(),
+                capability.getDescription()
+        );
+
+        when(capabilityRepository.existsByName(dto.name())).thenReturn(false);
+
+        when(capabilityMapper.mapToCapabilityEntity(dto)).thenReturn(capability);
+
+        when(capabilityRepository.saveAndFlush(capability)).thenReturn(capability);
+
+        when(capabilityMapper.mapToCapabilityReadOnlyDTO(capability)).thenReturn(expected);
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            CapabilityReadOnlyDTO actual = capabilityService.saveCapability(dto);
+
+            assertSame(expected, actual);
+
+            verify(capabilityRepository).existsByName(dto.name());
+            verify(capabilityMapper).mapToCapabilityEntity(dto);
+            verify(capabilityRepository).saveAndFlush(capability);
+            verify(capabilityMapper).mapToCapabilityReadOnlyDTO(capability);
+
+            verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 }
