@@ -373,4 +373,36 @@ public class CapabilityServiceImplTest {
         verifyNoMoreInteractions(capabilityRepository);
         verifyNoInteractions(capabilityMapper);
     }
+
+    @Test
+    void findAllCapabilities_whenCapabilitiesExist_shouldReturnMappedList() {
+
+        Capability firstCapability = new Capability();
+        firstCapability.setName("APPLICATION_READ");
+        firstCapability.setDescription("Allows viewing applications");
+
+        Capability secondCapability = new Capability();
+        secondCapability.setName("ROLE_MANAGE");
+        secondCapability.setDescription("Allows managing roles");
+
+        CapabilityReadOnlyDTO firstDto = new CapabilityReadOnlyDTO(firstCapability.getUuid(), firstCapability.getName(), firstCapability.getDescription());
+
+        CapabilityReadOnlyDTO secondDto = new CapabilityReadOnlyDTO(secondCapability.getUuid(), secondCapability.getName(), secondCapability.getDescription());
+
+        when(capabilityRepository.findAllByDeletedAtIsNullOrderByNameAsc()).thenReturn(List.of(firstCapability, secondCapability));
+
+        when(capabilityMapper.mapToCapabilityReadOnlyDTO(firstCapability)).thenReturn(firstDto);
+
+        when(capabilityMapper.mapToCapabilityReadOnlyDTO(secondCapability)).thenReturn(secondDto);
+
+        List<CapabilityReadOnlyDTO> actual = capabilityService.findAllCapabilities();
+
+        assertEquals(List.of(firstDto, secondDto), actual);
+
+        verify(capabilityRepository).findAllByDeletedAtIsNullOrderByNameAsc();
+        verify(capabilityMapper).mapToCapabilityReadOnlyDTO(firstCapability);
+        verify(capabilityMapper).mapToCapabilityReadOnlyDTO(secondCapability);
+
+        verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
+    }
 }
