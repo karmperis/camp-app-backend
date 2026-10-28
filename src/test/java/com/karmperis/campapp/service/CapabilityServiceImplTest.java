@@ -210,4 +210,48 @@ public class CapabilityServiceImplTest {
             TransactionSynchronizationManager.clearSynchronization();
         }
     }
+
+    @ParameterizedTest
+    @ValueSource(ints = {4, 100})
+    void saveCapability_whenNameLengthIsAtValidBoundary_shouldSucceed(int length)
+            throws EntityAlreadyExistsException, EntityInvalidArgumentException {
+
+        CapabilityInsertDTO dto = new CapabilityInsertDTO("A".repeat(length), "Allows viewing applications");
+
+        Capability capability = new Capability();
+        capability.setName(dto.name());
+        capability.setDescription(dto.description());
+
+        CapabilityReadOnlyDTO expected = new CapabilityReadOnlyDTO(
+                capability.getUuid(),
+                capability.getName(),
+                capability.getDescription()
+        );
+
+        when(capabilityRepository.existsByName(dto.name())).thenReturn(false);
+
+        when(capabilityMapper.mapToCapabilityEntity(dto)).thenReturn(capability);
+
+        when(capabilityRepository.saveAndFlush(capability)).thenReturn(capability);
+
+        when(capabilityMapper.mapToCapabilityReadOnlyDTO(capability)).thenReturn(expected);
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+
+            CapabilityReadOnlyDTO actual = capabilityService.saveCapability(dto);
+
+            assertSame(expected, actual);
+
+            verify(capabilityRepository).existsByName(dto.name());
+            verify(capabilityMapper).mapToCapabilityEntity(dto);
+            verify(capabilityRepository).saveAndFlush(capability);
+            verify(capabilityMapper).mapToCapabilityReadOnlyDTO(capability);
+
+            verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
 }
