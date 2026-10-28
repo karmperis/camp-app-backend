@@ -2,6 +2,7 @@ package com.karmperis.campapp.service;
 
 import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
 import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
+import com.karmperis.campapp.core.exceptions.EntityNotFoundException;
 import com.karmperis.campapp.dto.CapabilityInsertDTO;
 import com.karmperis.campapp.dto.CapabilityReadOnlyDTO;
 import com.karmperis.campapp.mapper.CapabilityMapper;
@@ -21,6 +22,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.sql.SQLException;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -312,5 +315,21 @@ public class CapabilityServiceImplTest {
         assertEquals("CapabilityInvalidArgument", exception.getCode());
 
         verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
+
+    @Test
+    void findCapabilityByUuid_whenCapabilityIsNotFound_shouldThrowEntityNotFoundException() {
+
+        UUID uuid = UUID.randomUUID();
+
+        when(capabilityRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> capabilityService.findCapabilityByUuid(uuid));
+
+        assertEquals("CapabilityNotFound", exception.getCode());
+
+        verify(capabilityRepository).findByUuidAndDeletedAtIsNull(uuid);
+        verifyNoMoreInteractions(capabilityRepository);
+        verifyNoInteractions(capabilityMapper);
     }
 }
