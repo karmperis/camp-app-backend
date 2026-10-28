@@ -332,4 +332,30 @@ public class CapabilityServiceImplTest {
         verifyNoMoreInteractions(capabilityRepository);
         verifyNoInteractions(capabilityMapper);
     }
+
+    @Test
+    void findCapabilityByUuid_whenCapabilityExists_shouldReturnCapability()
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+        capability.setDescription("Allows viewing applications");
+
+        UUID uuid = capability.getUuid();
+
+        CapabilityReadOnlyDTO expected = new CapabilityReadOnlyDTO(uuid, capability.getName(), capability.getDescription());
+
+        when(capabilityRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.of(capability));
+
+        when(capabilityMapper.mapToCapabilityReadOnlyDTO(capability)).thenReturn(expected);
+
+        CapabilityReadOnlyDTO actual = capabilityService.findCapabilityByUuid(uuid);
+
+        assertSame(expected, actual);
+
+        verify(capabilityRepository).findByUuidAndDeletedAtIsNull(uuid);
+        verify(capabilityMapper).mapToCapabilityReadOnlyDTO(capability);
+
+        verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
+    }
 }
