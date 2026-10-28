@@ -22,6 +22,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -357,5 +358,19 @@ public class CapabilityServiceImplTest {
         verify(capabilityMapper).mapToCapabilityReadOnlyDTO(capability);
 
         verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
+    }
+
+    @Test
+    void findAllCapabilities_whenNoCapabilitiesExist_shouldReturnEmptyList() {
+
+        when(capabilityRepository.findAllByDeletedAtIsNullOrderByNameAsc()).thenReturn(List.of());
+
+        List<CapabilityReadOnlyDTO> actual = capabilityService.findAllCapabilities();
+
+        assertTrue(actual.isEmpty());
+
+        verify(capabilityRepository).findAllByDeletedAtIsNullOrderByNameAsc();
+        verifyNoMoreInteractions(capabilityRepository);
+        verifyNoInteractions(capabilityMapper);
     }
 }
