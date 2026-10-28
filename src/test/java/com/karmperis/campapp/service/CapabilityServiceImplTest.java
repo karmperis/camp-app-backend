@@ -176,6 +176,36 @@ public class CapabilityServiceImplTest {
     }
 
     @Test
+    void saveCapability_whenAnotherConstraintIsViolated_shouldRethrowException() {
+
+        CapabilityInsertDTO dto = new CapabilityInsertDTO("APPLICATION_READ", "Allows viewing applications");
+
+        Capability capability = new Capability();
+
+        ConstraintViolationException constraintException = new ConstraintViolationException("Another constraint was violated",
+                new SQLException("Integrity constraint violation", "23000"), "some_other_constraint");
+
+        DataIntegrityViolationException databaseException = new DataIntegrityViolationException("Could not save capability",
+                constraintException);
+
+        when(capabilityRepository.existsByName(dto.name())).thenReturn(false);
+
+        when(capabilityMapper.mapToCapabilityEntity(dto)).thenReturn(capability);
+
+        when(capabilityRepository.saveAndFlush(capability)).thenThrow(databaseException);
+
+        DataIntegrityViolationException exception = assertThrows(DataIntegrityViolationException.class, () -> capabilityService.saveCapability(dto));
+
+        assertSame(databaseException, exception);
+
+        verify(capabilityRepository).existsByName(dto.name());
+        verify(capabilityMapper).mapToCapabilityEntity(dto);
+        verify(capabilityRepository).saveAndFlush(capability);
+
+        verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
+    }
+
+    @Test
     void saveCapability_whenDataIsValid_shouldReturnSavedCapability()
             throws EntityAlreadyExistsException, EntityInvalidArgumentException {
 
