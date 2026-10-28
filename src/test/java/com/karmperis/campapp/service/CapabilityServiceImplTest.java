@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
@@ -20,6 +21,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.sql.SQLException;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -253,5 +255,52 @@ public class CapabilityServiceImplTest {
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
         }
+    }
+
+    @ParameterizedTest
+    @MethodSource("validDescriptions")
+    void saveCapability_whenDescriptionIsValid_shouldSucceed(String description)
+            throws EntityAlreadyExistsException, EntityInvalidArgumentException {
+
+        CapabilityInsertDTO dto = new CapabilityInsertDTO("APPLICATION_READ", description);
+
+        Capability capability = new Capability();
+        capability.setName(dto.name());
+        capability.setDescription(dto.description());
+
+        CapabilityReadOnlyDTO expected = new CapabilityReadOnlyDTO(
+                capability.getUuid(),
+                capability.getName(),
+                capability.getDescription()
+        );
+
+        when(capabilityRepository.existsByName(dto.name())).thenReturn(false);
+
+        when(capabilityMapper.mapToCapabilityEntity(dto)).thenReturn(capability);
+
+        when(capabilityRepository.saveAndFlush(capability)).thenReturn(capability);
+
+        when(capabilityMapper.mapToCapabilityReadOnlyDTO(capability)).thenReturn(expected);
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            CapabilityReadOnlyDTO actual = capabilityService.saveCapability(dto);
+
+            assertSame(expected, actual);
+
+            verify(capabilityRepository).existsByName(dto.name());
+            verify(capabilityMapper).mapToCapabilityEntity(dto);
+            verify(capabilityRepository).saveAndFlush(capability);
+            verify(capabilityMapper).mapToCapabilityReadOnlyDTO(capability);
+
+            verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    private static Stream<String> validDescriptions() {
+        return Stream.of(null, "", "A".repeat(255));
     }
 }
