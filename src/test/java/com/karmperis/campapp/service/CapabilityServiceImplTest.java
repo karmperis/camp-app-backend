@@ -303,4 +303,14 @@ public class CapabilityServiceImplTest {
     private static Stream<String> validDescriptions() {
         return Stream.of(null, "", "A".repeat(255));
     }
+
+    @Test
+    void findCapabilityByUuid_whenUuidIsNull_shouldThrowEntityInvalidArgumentException() {
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class, () -> capabilityService.findCapabilityByUuid(null));
+
+        assertEquals("CapabilityInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
 }
