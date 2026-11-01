@@ -449,4 +449,38 @@ public class CapabilityServiceImplTest {
         verifyNoMoreInteractions(capabilityRepository);
         verifyNoInteractions(capabilityMapper);
     }
+
+    @Test
+    void findAllSoftDeletedCapabilities_whenCapabilitiesExist_shouldReturnMappedList() {
+
+        Capability firstCapability = new Capability();
+        firstCapability.setName("APPLICATION_READ");
+        firstCapability.setDescription("Allows viewing applications");
+        firstCapability.softDelete();
+
+        Capability secondCapability = new Capability();
+        secondCapability.setName("ROLE_MANAGE");
+        secondCapability.setDescription("Allows managing roles");
+        secondCapability.softDelete();
+
+        CapabilityReadOnlyDTO firstDto = new CapabilityReadOnlyDTO(firstCapability.getUuid(), firstCapability.getName(), firstCapability.getDescription());
+
+        CapabilityReadOnlyDTO secondDto = new CapabilityReadOnlyDTO(secondCapability.getUuid(), secondCapability.getName(), secondCapability.getDescription());
+
+        when(capabilityRepository.findAllByDeletedAtIsNotNullOrderByNameAsc()).thenReturn(List.of(firstCapability, secondCapability));
+
+        when(capabilityMapper.mapToCapabilityReadOnlyDTO(firstCapability)).thenReturn(firstDto);
+
+        when(capabilityMapper.mapToCapabilityReadOnlyDTO(secondCapability)).thenReturn(secondDto);
+
+        List<CapabilityReadOnlyDTO> actual = capabilityService.findAllSoftDeletedCapabilities();
+
+        assertEquals(List.of(firstDto, secondDto), actual);
+
+        verify(capabilityRepository).findAllByDeletedAtIsNotNullOrderByNameAsc();
+        verify(capabilityMapper).mapToCapabilityReadOnlyDTO(firstCapability);
+        verify(capabilityMapper).mapToCapabilityReadOnlyDTO(secondCapability);
+
+        verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
+    }
 }
