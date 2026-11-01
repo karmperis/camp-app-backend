@@ -3,6 +3,7 @@ package com.karmperis.campapp.service;
 import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
 import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
 import com.karmperis.campapp.core.exceptions.EntityNotFoundException;
+import com.karmperis.campapp.dto.CapabilityEditDTO;
 import com.karmperis.campapp.dto.CapabilityInsertDTO;
 import com.karmperis.campapp.dto.CapabilityReadOnlyDTO;
 import com.karmperis.campapp.mapper.CapabilityMapper;
@@ -482,5 +483,18 @@ public class CapabilityServiceImplTest {
         verify(capabilityMapper).mapToCapabilityReadOnlyDTO(secondCapability);
 
         verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
+    }
+
+    @Test
+    void updateCapability_whenUuidIsNull_shouldThrowEntityInvalidArgumentException() {
+
+        CapabilityEditDTO dto = new CapabilityEditDTO("Updated capability description");
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> capabilityService.updateCapability(null, dto));
+
+        assertEquals("CapabilityInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
 }
