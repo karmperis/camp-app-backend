@@ -510,4 +510,18 @@ public class CapabilityServiceImplTest {
 
         verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void updateCapability_whenDescriptionExceedsMaxLength_shouldThrowEntityInvalidArgumentException() {
+
+        UUID uuid = UUID.randomUUID();
+        CapabilityEditDTO dto = new CapabilityEditDTO("A".repeat(256));
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> capabilityService.updateCapability(uuid, dto));
+
+        assertEquals("CapabilityInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
 }
