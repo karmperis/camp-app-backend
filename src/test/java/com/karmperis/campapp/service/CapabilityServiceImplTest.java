@@ -582,4 +582,43 @@ public class CapabilityServiceImplTest {
             TransactionSynchronizationManager.clearSynchronization();
         }
     }
+
+    @ParameterizedTest
+    @MethodSource("validDescriptions")
+    void updateCapability_whenDescriptionIsValid_shouldReturnUpdatedCapability(String description)
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+        capability.setDescription("Original description");
+
+        UUID uuid = capability.getUuid();
+        CapabilityEditDTO dto = new CapabilityEditDTO(description);
+
+        CapabilityReadOnlyDTO expected = new CapabilityReadOnlyDTO(uuid, capability.getName(), description);
+
+        when(capabilityRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.of(capability));
+
+        when(capabilityMapper.mapToCapabilityReadOnlyDTO(capability)).thenReturn(expected);
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            CapabilityReadOnlyDTO actual = capabilityService.updateCapability(uuid, dto);
+
+            assertSame(expected, actual);
+
+            InOrder inOrder = inOrder(capabilityRepository, capabilityMapper);
+
+            inOrder.verify(capabilityRepository).findByUuidAndDeletedAtIsNull(uuid);
+
+            inOrder.verify(capabilityMapper).updateCapabilityFromDTO(dto, capability);
+
+            inOrder.verify(capabilityMapper).mapToCapabilityReadOnlyDTO(capability);
+
+            verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
 }
