@@ -435,4 +435,18 @@ public class CapabilityServiceImplTest {
 
         verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void findAllSoftDeletedCapabilities_whenNoCapabilitiesExist_shouldReturnEmptyList() {
+
+        when(capabilityRepository.findAllByDeletedAtIsNotNullOrderByNameAsc()).thenReturn(List.of());
+
+        List<CapabilityReadOnlyDTO> actual = capabilityService.findAllSoftDeletedCapabilities();
+
+        assertTrue(actual.isEmpty());
+
+        verify(capabilityRepository).findAllByDeletedAtIsNotNullOrderByNameAsc();
+        verifyNoMoreInteractions(capabilityRepository);
+        verifyNoInteractions(capabilityMapper);
+    }
 }
