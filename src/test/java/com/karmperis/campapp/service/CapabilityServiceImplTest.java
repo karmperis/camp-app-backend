@@ -524,4 +524,22 @@ public class CapabilityServiceImplTest {
 
         verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void updateCapability_whenCapabilityIsNotFound_shouldThrowEntityNotFoundException() {
+
+        UUID uuid = UUID.randomUUID();
+        CapabilityEditDTO dto = new CapabilityEditDTO("Updated capability description");
+
+        when(capabilityRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> capabilityService.updateCapability(uuid, dto));
+
+        assertEquals("CapabilityNotFound", exception.getCode());
+
+        verify(capabilityRepository).findByUuidAndDeletedAtIsNull(uuid);
+        verifyNoMoreInteractions(capabilityRepository);
+        verifyNoInteractions(capabilityMapper);
+    }
 }
