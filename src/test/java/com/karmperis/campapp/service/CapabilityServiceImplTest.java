@@ -497,4 +497,17 @@ public class CapabilityServiceImplTest {
 
         verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void updateCapability_whenDtoIsNull_shouldThrowEntityInvalidArgumentException() {
+
+        UUID uuid = UUID.randomUUID();
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> capabilityService.updateCapability(uuid, null));
+
+        assertEquals("CapabilityInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
 }
