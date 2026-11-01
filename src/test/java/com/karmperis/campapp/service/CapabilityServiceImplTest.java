@@ -17,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -541,5 +542,44 @@ public class CapabilityServiceImplTest {
         verify(capabilityRepository).findByUuidAndDeletedAtIsNull(uuid);
         verifyNoMoreInteractions(capabilityRepository);
         verifyNoInteractions(capabilityMapper);
+    }
+
+    @Test
+    void updateCapability_whenDataIsValid_shouldReturnUpdatedCapability()
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+        capability.setDescription("Original description");
+
+        UUID uuid = capability.getUuid();
+
+        CapabilityEditDTO dto = new CapabilityEditDTO("Updated capability description");
+
+        CapabilityReadOnlyDTO expected = new CapabilityReadOnlyDTO(uuid, capability.getName(), dto.description());
+
+        when(capabilityRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.of(capability));
+
+        when(capabilityMapper.mapToCapabilityReadOnlyDTO(capability)).thenReturn(expected);
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            CapabilityReadOnlyDTO actual = capabilityService.updateCapability(uuid, dto);
+
+            assertSame(expected, actual);
+
+            InOrder inOrder = inOrder(capabilityRepository, capabilityMapper);
+
+            inOrder.verify(capabilityRepository).findByUuidAndDeletedAtIsNull(uuid);
+
+            inOrder.verify(capabilityMapper).updateCapabilityFromDTO(dto, capability);
+
+            inOrder.verify(capabilityMapper).mapToCapabilityReadOnlyDTO(capability);
+
+            verifyNoMoreInteractions(capabilityRepository, capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 }
