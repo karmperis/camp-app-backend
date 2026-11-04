@@ -705,4 +705,32 @@ public class CapabilityServiceImplTest {
         verifyNoMoreInteractions(capabilityRepository);
         verifyNoInteractions(capabilityMapper);
     }
+
+    @Test
+    void softDeleteCapabilityByUuid_whenCapabilityHasNoRoles_shouldSoftDelete()
+            throws EntityNotFoundException, EntityInvalidArgumentException, OperationNotAllowedException {
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+
+        UUID uuid = capability.getUuid();
+
+        when(capabilityRepository.findByUuidForUpdate(uuid)).thenReturn(Optional.of(capability));
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            capabilityService.softDeleteCapabilityByUuid(uuid);
+
+            assertNotNull(capability.getDeletedAt());
+
+            verify(capabilityRepository).findByUuidForUpdate(uuid);
+            verify(capabilityRepository).save(capability);
+
+            verifyNoMoreInteractions(capabilityRepository);
+            verifyNoInteractions(capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
 }
