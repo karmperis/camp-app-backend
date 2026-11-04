@@ -8,7 +8,7 @@ public class EntityInvalidArgumentException extends AppGenericException {
     private static final String CODE_SUFFIX = "InvalidArgument";
 
     /**
-     * Create a new exception for an "invalid argument" error.
+     * Creates a new exception for an "invalid argument" error.
      *
      * @param code    base application error code/prefix
      * @param message readable error message

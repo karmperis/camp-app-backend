@@ -97,6 +97,22 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
+     * Handles {@link OperationNotAllowedException} and returns a ResponseEntity with an ErrorResponseDTO.
+     * HTTP 409
+     *
+     * @param e the OperationNotAllowedException to handle
+     * @return response entity with the error details
+     */
+    @ExceptionHandler(OperationNotAllowedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleOperationNotAllowedException(OperationNotAllowedException e) {
+        log.warn("Operation not allowed. Message={}", e.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponseDTO(e.getCode(), e.getMessage()));
+    }
+
+    /**
      * Handles {@link AuthenticationException} and returns a ResponseEntity with an ErrorResponseDTO.
      * HTTP 401
      *

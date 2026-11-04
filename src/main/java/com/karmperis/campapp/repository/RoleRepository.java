@@ -50,4 +50,13 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
      * @return true if the name is already used, false otherwise
      */
     boolean existsByName(String name);
+
+    /**
+     * Checks whether a role name is already used by a different role, including soft-deleted roles.
+     *
+     * @param name The name of the role to check
+     * @param uuid The UUID of the role to exclude from the check
+     * @return true if the name is already used by a different role, false otherwise
+     */
+    boolean existsByNameAndUuidNot(String name, UUID uuid);
 }
