@@ -632,4 +632,44 @@ public class CapabilityServiceImplTest {
 
         verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void softDeleteCapabilityByUuid_whenCapabilityIsNotFound_shouldThrowEntityNotFoundException() {
+
+        UUID uuid = UUID.randomUUID();
+
+        when(capabilityRepository.findByUuidForUpdate(uuid)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> capabilityService.softDeleteCapabilityByUuid(uuid));
+
+        assertEquals("CapabilityNotFound", exception.getCode());
+
+        verify(capabilityRepository).findByUuidForUpdate(uuid);
+        verifyNoMoreInteractions(capabilityRepository);
+        verifyNoInteractions(capabilityMapper);
+    }
+
+    @Test
+    void softDeleteCapabilityByUuid_whenCapabilityIsAlreadyDeleted_shouldThrowEntityNotFoundException() {
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+        capability.softDelete();
+
+        UUID uuid = capability.getUuid();
+        var originalDeletedAt = capability.getDeletedAt();
+
+        when(capabilityRepository.findByUuidForUpdate(uuid)).thenReturn(Optional.of(capability));
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> capabilityService.softDeleteCapabilityByUuid(uuid));
+
+        assertEquals("CapabilityNotFound", exception.getCode());
+        assertEquals(originalDeletedAt, capability.getDeletedAt());
+
+        verify(capabilityRepository).findByUuidForUpdate(uuid);
+        verifyNoMoreInteractions(capabilityRepository);
+        verifyNoInteractions(capabilityMapper);
+    }
 }
