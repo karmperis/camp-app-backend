@@ -3,11 +3,13 @@ package com.karmperis.campapp.service;
 import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
 import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
 import com.karmperis.campapp.core.exceptions.EntityNotFoundException;
+import com.karmperis.campapp.core.exceptions.OperationNotAllowedException;
 import com.karmperis.campapp.dto.CapabilityEditDTO;
 import com.karmperis.campapp.dto.CapabilityInsertDTO;
 import com.karmperis.campapp.dto.CapabilityReadOnlyDTO;
 import com.karmperis.campapp.mapper.CapabilityMapper;
 import com.karmperis.campapp.model.Capability;
+import com.karmperis.campapp.model.Role;
 import com.karmperis.campapp.repository.CapabilityRepository;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -667,6 +669,37 @@ public class CapabilityServiceImplTest {
 
         assertEquals("CapabilityNotFound", exception.getCode());
         assertEquals(originalDeletedAt, capability.getDeletedAt());
+
+        verify(capabilityRepository).findByUuidForUpdate(uuid);
+        verifyNoMoreInteractions(capabilityRepository);
+        verifyNoInteractions(capabilityMapper);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void softDeleteCapabilityByUuid_whenAssignedToRole_shouldThrowOperationNotAllowedException(boolean roleIsDeleted) {
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+
+        Role role = new Role();
+        role.setName("CUSTOM_ROLE");
+
+        if (roleIsDeleted) {
+            role.softDelete();
+        }
+
+        role.addCapability(capability);
+
+        UUID uuid = capability.getUuid();
+
+        when(capabilityRepository.findByUuidForUpdate(uuid)).thenReturn(Optional.of(capability));
+
+        OperationNotAllowedException exception = assertThrows(OperationNotAllowedException.class,
+                () -> capabilityService.softDeleteCapabilityByUuid(uuid));
+
+        assertEquals("CapabilityOperationNotAllowed", exception.getCode());
+        assertNull(capability.getDeletedAt());
 
         verify(capabilityRepository).findByUuidForUpdate(uuid);
         verifyNoMoreInteractions(capabilityRepository);
