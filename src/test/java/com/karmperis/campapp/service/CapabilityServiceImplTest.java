@@ -733,4 +733,41 @@ public class CapabilityServiceImplTest {
             TransactionSynchronizationManager.clearSynchronization();
         }
     }
+
+    @Test
+    void softDeleteCapabilityByUuid_whenSaveFails_shouldRethrowExceptionAndNotRegisterCallback() {
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+
+        UUID uuid = capability.getUuid();
+
+        DataIntegrityViolationException databaseException = new DataIntegrityViolationException("Could not save capability");
+
+        when(capabilityRepository.findByUuidForUpdate(uuid)).thenReturn(Optional.of(capability));
+
+        when(capabilityRepository.save(capability)).thenThrow(databaseException);
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            DataIntegrityViolationException exception = assertThrows(DataIntegrityViolationException.class,
+                    () -> capabilityService.softDeleteCapabilityByUuid(uuid));
+
+            assertSame(databaseException, exception);
+
+            assertTrue(TransactionSynchronizationManager
+                    .getSynchronizations()
+                    .isEmpty()
+            );
+
+            verify(capabilityRepository).findByUuidForUpdate(uuid);
+            verify(capabilityRepository).save(capability);
+
+            verifyNoMoreInteractions(capabilityRepository);
+            verifyNoInteractions(capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
 }
