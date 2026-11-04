@@ -621,4 +621,15 @@ public class CapabilityServiceImplTest {
             TransactionSynchronizationManager.clearSynchronization();
         }
     }
+
+    @Test
+    void softDeleteCapabilityByUuid_whenUuidIsNull_shouldThrowEntityInvalidArgumentException() {
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> capabilityService.softDeleteCapabilityByUuid(null));
+
+        assertEquals("CapabilityInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
 }
