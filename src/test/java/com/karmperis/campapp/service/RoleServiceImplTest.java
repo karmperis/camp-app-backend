@@ -8,6 +8,7 @@ import com.karmperis.campapp.mapper.RoleMapper;
 import com.karmperis.campapp.model.Role;
 import com.karmperis.campapp.repository.CapabilityRepository;
 import com.karmperis.campapp.repository.RoleRepository;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +18,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+
+import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -132,5 +135,36 @@ public class RoleServiceImplTest {
         verifyNoMoreInteractions(roleRepository, roleMapper);
         verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"uk_roles_name", "roles.uk_roles_name"})
+    void saveRole_whenNameConstraintIsViolated_shouldThrowEntityAlreadyExistsException(String constraintName) {
+
+        RoleInsertDTO dto = new RoleInsertDTO("CUSTOM_ROLE");
+
+        Role role = new Role();
+
+        SQLException sqlException = new SQLException("Duplicate entry", "23000", 1062);
+
+        ConstraintViolationException constraintException = new ConstraintViolationException("Duplicate role name", sqlException, constraintName);
+
+        DataIntegrityViolationException databaseException = new DataIntegrityViolationException("Could not save role", constraintException);
+
+        when(roleRepository.existsByName(dto.name())).thenReturn(false);
+
+        when(roleMapper.mapToRoleEntity(dto)).thenReturn(role);
+
+        when(roleRepository.saveAndFlush(role)).thenThrow(databaseException);
+
+        assertThrows(EntityAlreadyExistsException.class, () -> roleService.saveRole(dto));
+
+        verify(roleRepository).existsByName(dto.name());
+        verify(roleMapper).mapToRoleEntity(dto);
+        verify(roleRepository).saveAndFlush(role);
+
+        verifyNoMoreInteractions(roleRepository, roleMapper);
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
+
 
 }
