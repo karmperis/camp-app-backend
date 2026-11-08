@@ -3,6 +3,7 @@ package com.karmperis.campapp.service;
 import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
 import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
 import com.karmperis.campapp.dto.RoleInsertDTO;
+import com.karmperis.campapp.dto.RoleReadOnlyDTO;
 import com.karmperis.campapp.mapper.CapabilityMapper;
 import com.karmperis.campapp.mapper.RoleMapper;
 import com.karmperis.campapp.model.Role;
@@ -18,6 +19,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.sql.SQLException;
 
@@ -195,6 +197,44 @@ public class RoleServiceImplTest {
 
         verifyNoMoreInteractions(roleRepository, roleMapper);
         verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
+
+    @Test
+    void saveRole_whenDataIsValid_shouldReturnSavedRole()
+            throws EntityAlreadyExistsException, EntityInvalidArgumentException {
+
+        RoleInsertDTO dto = new RoleInsertDTO("CUSTOM_ROLE");
+
+        Role role = new Role();
+        role.setName(dto.name());
+
+        RoleReadOnlyDTO expected = new RoleReadOnlyDTO(role.getUuid(), role.getName());
+
+        when(roleRepository.existsByName(dto.name())).thenReturn(false);
+
+        when(roleMapper.mapToRoleEntity(dto)).thenReturn(role);
+
+        when(roleRepository.saveAndFlush(role)).thenReturn(role);
+
+        when(roleMapper.mapToRoleReadOnlyDTO(role)).thenReturn(expected);
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            RoleReadOnlyDTO actual = roleService.saveRole(dto);
+
+            assertSame(expected, actual);
+
+            verify(roleRepository).existsByName(dto.name());
+            verify(roleMapper).mapToRoleEntity(dto);
+            verify(roleRepository).saveAndFlush(role);
+            verify(roleMapper).mapToRoleReadOnlyDTO(role);
+
+            verifyNoMoreInteractions(roleRepository, roleMapper);
+            verifyNoInteractions(capabilityRepository, capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
 
