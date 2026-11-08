@@ -1,9 +1,11 @@
 package com.karmperis.campapp.service;
 
+import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
 import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
 import com.karmperis.campapp.dto.RoleInsertDTO;
 import com.karmperis.campapp.mapper.CapabilityMapper;
 import com.karmperis.campapp.mapper.RoleMapper;
+import com.karmperis.campapp.model.Role;
 import com.karmperis.campapp.repository.CapabilityRepository;
 import com.karmperis.campapp.repository.RoleRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,10 +16,10 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link RoleServiceImpl}.
@@ -86,6 +88,49 @@ public class RoleServiceImplTest {
         assertEquals("RoleInvalidArgument", exception.getCode());
 
         verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
+    }
+
+    @Test
+    void saveRole_whenNameAlreadyExists_shouldThrowEntityAlreadyExistsException() {
+
+        RoleInsertDTO dto = new RoleInsertDTO("CUSTOM_ROLE");
+
+        when(roleRepository.existsByName(dto.name())).thenReturn(true);
+
+        assertThrows(EntityAlreadyExistsException.class, () -> roleService.saveRole(dto));
+
+        verify(roleRepository).existsByName(dto.name());
+        verifyNoMoreInteractions(roleRepository);
+
+        verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
+    }
+
+    @Test
+    void saveRole_whenIntegrityViolationIsNotNameConflict_shouldRethrowException() {
+
+        RoleInsertDTO dto = new RoleInsertDTO("CUSTOM_ROLE");
+
+        Role role = new Role();
+
+        DataIntegrityViolationException databaseException = new DataIntegrityViolationException("Unrelated integrity violation");
+
+        when(roleRepository.existsByName(dto.name())).thenReturn(false);
+
+        when(roleMapper.mapToRoleEntity(dto)).thenReturn(role);
+
+        when(roleRepository.saveAndFlush(role)).thenThrow(databaseException);
+
+        DataIntegrityViolationException exception = assertThrows(DataIntegrityViolationException.class,
+                () -> roleService.saveRole(dto));
+
+        assertSame(databaseException, exception);
+
+        verify(roleRepository).existsByName(dto.name());
+        verify(roleMapper).mapToRoleEntity(dto);
+        verify(roleRepository).saveAndFlush(role);
+
+        verifyNoMoreInteractions(roleRepository, roleMapper);
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
 
 }
