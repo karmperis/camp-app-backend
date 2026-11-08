@@ -237,5 +237,44 @@ public class RoleServiceImplTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {4, 50})
+    void saveRole_whenNameLengthIsAtValidBoundary_shouldSucceed(int length)
+            throws EntityAlreadyExistsException, EntityInvalidArgumentException {
+
+        RoleInsertDTO dto = new RoleInsertDTO("A".repeat(length));
+
+        Role role = new Role();
+        role.setName(dto.name());
+
+        RoleReadOnlyDTO expected = new RoleReadOnlyDTO(role.getUuid(), role.getName());
+
+        when(roleRepository.existsByName(dto.name())).thenReturn(false);
+
+        when(roleMapper.mapToRoleEntity(dto)).thenReturn(role);
+
+        when(roleRepository.saveAndFlush(role)).thenReturn(role);
+
+        when(roleMapper.mapToRoleReadOnlyDTO(role)).thenReturn(expected);
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            RoleReadOnlyDTO actual = roleService.saveRole(dto);
+
+            assertSame(expected, actual);
+
+            verify(roleRepository).existsByName(dto.name());
+            verify(roleMapper).mapToRoleEntity(dto);
+            verify(roleRepository).saveAndFlush(role);
+            verify(roleMapper).mapToRoleReadOnlyDTO(role);
+
+            verifyNoMoreInteractions(roleRepository, roleMapper);
+            verifyNoInteractions(capabilityRepository, capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
 
 }
