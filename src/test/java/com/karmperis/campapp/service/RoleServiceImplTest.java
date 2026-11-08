@@ -9,6 +9,9 @@ import com.karmperis.campapp.repository.RoleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -46,6 +49,21 @@ public class RoleServiceImplTest {
     void saveRole_whenDtoIsNull_shouldThrowEntityInvalidArgumentException() {
 
         RoleInsertDTO dto = null;
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> roleService.saveRole(dto));
+
+        assertEquals("RoleInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "   ", "\t", "\n"})
+    void saveRole_whenNameIsNullOrBlank_shouldThrowEntityInvalidArgumentException(String name) {
+
+        RoleInsertDTO dto = new RoleInsertDTO(name);
 
         EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
                 () -> roleService.saveRole(dto));
