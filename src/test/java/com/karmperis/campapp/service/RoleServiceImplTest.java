@@ -2,6 +2,7 @@ package com.karmperis.campapp.service;
 
 import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
 import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
+import com.karmperis.campapp.core.exceptions.EntityNotFoundException;
 import com.karmperis.campapp.dto.RoleInsertDTO;
 import com.karmperis.campapp.dto.RoleReadOnlyDTO;
 import com.karmperis.campapp.mapper.CapabilityMapper;
@@ -22,6 +23,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.sql.SQLException;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -274,6 +277,36 @@ public class RoleServiceImplTest {
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
         }
+    }
+
+    @Test
+    void findRoleByUuid_whenUuidIsNull_shouldThrowEntityInvalidArgumentException() {
+
+        UUID uuid = null;
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> roleService.findRoleByUuid(uuid));
+
+        assertEquals("RoleInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
+    }
+
+    @Test
+    void findRoleByUuid_whenRoleIsNotFound_shouldThrowEntityNotFoundException() {
+
+        UUID uuid = UUID.randomUUID();
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> roleService.findRoleByUuid(uuid));
+
+        assertEquals("RoleNotFound", exception.getCode());
+
+        verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
+        verifyNoMoreInteractions(roleRepository);
+
+        verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
     }
 
 
