@@ -166,5 +166,36 @@ public class RoleServiceImplTest {
         verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
 
+    @Test
+    void saveRole_whenAnotherConstraintIsViolated_shouldRethrowException() {
+
+        RoleInsertDTO dto = new RoleInsertDTO("CUSTOM_ROLE");
+
+        Role role = new Role();
+
+        ConstraintViolationException constraintException =
+                new ConstraintViolationException("Another constraint was violated", new SQLException("Integrity constraint violation", "23000"),
+                        "some_other_constraint");
+
+        DataIntegrityViolationException databaseException = new DataIntegrityViolationException("Could not save role", constraintException);
+
+        when(roleRepository.existsByName(dto.name())).thenReturn(false);
+
+        when(roleMapper.mapToRoleEntity(dto)).thenReturn(role);
+
+        when(roleRepository.saveAndFlush(role)).thenThrow(databaseException);
+
+        DataIntegrityViolationException exception = assertThrows(DataIntegrityViolationException.class, () -> roleService.saveRole(dto));
+
+        assertSame(databaseException, exception);
+
+        verify(roleRepository).existsByName(dto.name());
+        verify(roleMapper).mapToRoleEntity(dto);
+        verify(roleRepository).saveAndFlush(role);
+
+        verifyNoMoreInteractions(roleRepository, roleMapper);
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
+
 
 }
