@@ -382,4 +382,19 @@ public class RoleServiceImplTest {
         verifyNoMoreInteractions(roleRepository, roleMapper);
         verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void findAllSoftDeletedRoles_whenNoRolesExist_shouldReturnEmptyList() {
+
+        when(roleRepository.findAllByDeletedAtIsNotNullOrderByNameAsc()).thenReturn(List.of());
+
+        List<RoleReadOnlyDTO> actual = roleService.findAllSoftDeletedRoles();
+
+        assertTrue(actual.isEmpty());
+
+        verify(roleRepository).findAllByDeletedAtIsNotNullOrderByNameAsc();
+        verifyNoMoreInteractions(roleRepository);
+
+        verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
+    }
 }
