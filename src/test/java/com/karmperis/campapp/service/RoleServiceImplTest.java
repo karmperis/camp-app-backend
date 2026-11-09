@@ -397,4 +397,37 @@ public class RoleServiceImplTest {
 
         verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void findAllSoftDeletedRoles_whenRolesExist_shouldReturnMappedList() {
+
+        Role firstRole = new Role();
+        firstRole.setName("CUSTOM_EDITOR");
+        firstRole.softDelete();
+
+        Role secondRole = new Role();
+        secondRole.setName("CUSTOM_VIEWER");
+        secondRole.softDelete();
+
+        RoleReadOnlyDTO firstDto = new RoleReadOnlyDTO(firstRole.getUuid(), firstRole.getName());
+
+        RoleReadOnlyDTO secondDto = new RoleReadOnlyDTO(secondRole.getUuid(), secondRole.getName());
+
+        when(roleRepository.findAllByDeletedAtIsNotNullOrderByNameAsc()).thenReturn(List.of(firstRole, secondRole));
+
+        when(roleMapper.mapToRoleReadOnlyDTO(firstRole)).thenReturn(firstDto);
+
+        when(roleMapper.mapToRoleReadOnlyDTO(secondRole)).thenReturn(secondDto);
+
+        List<RoleReadOnlyDTO> actual = roleService.findAllSoftDeletedRoles();
+
+        assertEquals(List.of(firstDto, secondDto), actual);
+
+        verify(roleRepository).findAllByDeletedAtIsNotNullOrderByNameAsc();
+        verify(roleMapper).mapToRoleReadOnlyDTO(firstRole);
+        verify(roleMapper).mapToRoleReadOnlyDTO(secondRole);
+
+        verifyNoMoreInteractions(roleRepository, roleMapper);
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
 }
