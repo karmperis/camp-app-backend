@@ -23,6 +23,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -336,4 +337,18 @@ public class RoleServiceImplTest {
         verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
 
+    @Test
+    void findAllRoles_whenNoRolesExist_shouldReturnEmptyList() {
+
+        when(roleRepository.findAllByDeletedAtIsNullOrderByNameAsc()).thenReturn(List.of());
+
+        List<RoleReadOnlyDTO> actual = roleService.findAllRoles();
+
+        assertTrue(actual.isEmpty());
+
+        verify(roleRepository).findAllByDeletedAtIsNullOrderByNameAsc();
+        verifyNoMoreInteractions(roleRepository);
+
+        verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
+    }
 }
