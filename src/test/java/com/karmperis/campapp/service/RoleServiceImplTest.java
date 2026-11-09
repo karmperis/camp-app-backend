@@ -351,4 +351,35 @@ public class RoleServiceImplTest {
 
         verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void findAllRoles_whenRolesExist_shouldReturnMappedList() {
+
+        Role firstRole = new Role();
+        firstRole.setName("ADMIN");
+
+        Role secondRole = new Role();
+        secondRole.setName("GUARDIAN");
+
+        RoleReadOnlyDTO firstDto = new RoleReadOnlyDTO(firstRole.getUuid(), firstRole.getName());
+
+        RoleReadOnlyDTO secondDto = new RoleReadOnlyDTO(secondRole.getUuid(), secondRole.getName());
+
+        when(roleRepository.findAllByDeletedAtIsNullOrderByNameAsc()).thenReturn(List.of(firstRole, secondRole));
+
+        when(roleMapper.mapToRoleReadOnlyDTO(firstRole)).thenReturn(firstDto);
+
+        when(roleMapper.mapToRoleReadOnlyDTO(secondRole)).thenReturn(secondDto);
+
+        List<RoleReadOnlyDTO> actual = roleService.findAllRoles();
+
+        assertEquals(List.of(firstDto, secondDto), actual);
+
+        verify(roleRepository).findAllByDeletedAtIsNullOrderByNameAsc();
+        verify(roleMapper).mapToRoleReadOnlyDTO(firstRole);
+        verify(roleMapper).mapToRoleReadOnlyDTO(secondRole);
+
+        verifyNoMoreInteractions(roleRepository, roleMapper);
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
 }
