@@ -445,4 +445,18 @@ public class RoleServiceImplTest {
 
         verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void updateRole_whenDtoIsNull_shouldThrowEntityInvalidArgumentException() {
+
+        UUID uuid = UUID.randomUUID();
+        RoleEditDTO dto = null;
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> roleService.updateRole(uuid, dto));
+
+        assertEquals("RoleInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
+    }
 }
