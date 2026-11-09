@@ -475,4 +475,20 @@ public class RoleServiceImplTest {
 
         verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
     }
+
+    @ParameterizedTest
+    @ValueSource(ints = {3, 51})
+    void updateRole_whenNameLengthIsOutOfBounds_shouldThrowEntityInvalidArgumentException(
+            int length) {
+
+        UUID uuid = UUID.randomUUID();
+        RoleEditDTO dto = new RoleEditDTO("A".repeat(length));
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> roleService.updateRole(uuid, dto));
+
+        assertEquals("RoleInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
+    }
 }
