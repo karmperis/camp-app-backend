@@ -3,6 +3,7 @@ package com.karmperis.campapp.service;
 import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
 import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
 import com.karmperis.campapp.core.exceptions.EntityNotFoundException;
+import com.karmperis.campapp.dto.RoleEditDTO;
 import com.karmperis.campapp.dto.RoleInsertDTO;
 import com.karmperis.campapp.dto.RoleReadOnlyDTO;
 import com.karmperis.campapp.mapper.CapabilityMapper;
@@ -429,5 +430,19 @@ public class RoleServiceImplTest {
 
         verifyNoMoreInteractions(roleRepository, roleMapper);
         verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
+
+    @Test
+    void updateRole_whenUuidIsNull_shouldThrowEntityInvalidArgumentException() {
+
+        UUID uuid = null;
+        RoleEditDTO dto = new RoleEditDTO("CUSTOM_EDITOR");
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> roleService.updateRole(uuid, dto));
+
+        assertEquals("RoleInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
     }
 }
