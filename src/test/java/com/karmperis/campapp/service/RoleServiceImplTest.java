@@ -309,5 +309,31 @@ public class RoleServiceImplTest {
         verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
     }
 
+    @Test
+    void findRoleByUuid_whenRoleExists_shouldReturnRole()
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        Role role = new Role();
+
+        role.setName("CUSTOM_ROLE");
+
+        UUID uuid = role.getUuid();
+
+        RoleReadOnlyDTO expected = new RoleReadOnlyDTO(uuid, role.getName());
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.of(role));
+
+        when(roleMapper.mapToRoleReadOnlyDTO(role)).thenReturn(expected);
+
+        RoleReadOnlyDTO actual = roleService.findRoleByUuid(uuid);
+
+        assertSame(expected, actual);
+
+        verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
+        verify(roleMapper).mapToRoleReadOnlyDTO(role);
+
+        verifyNoMoreInteractions(roleRepository, roleMapper);
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
 
 }
