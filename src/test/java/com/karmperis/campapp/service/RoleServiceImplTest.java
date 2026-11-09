@@ -3,6 +3,7 @@ package com.karmperis.campapp.service;
 import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
 import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
 import com.karmperis.campapp.core.exceptions.EntityNotFoundException;
+import com.karmperis.campapp.core.exceptions.OperationNotAllowedException;
 import com.karmperis.campapp.dto.RoleEditDTO;
 import com.karmperis.campapp.dto.RoleInsertDTO;
 import com.karmperis.campapp.dto.RoleReadOnlyDTO;
@@ -531,6 +532,30 @@ public class RoleServiceImplTest {
 
         verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
         verify(roleRepository).existsByNameAndUuidNot(dto.name(), uuid);
+        verifyNoMoreInteractions(roleRepository);
+
+        verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN", "GUARDIAN", "LEADER"})
+    void updateRole_whenBuiltInRoleIsRenamed_shouldThrowOperationNotAllowedException(String originalName) {
+
+        Role role = new Role();
+        role.setName(originalName);
+
+        UUID uuid = role.getUuid();
+        RoleEditDTO dto = new RoleEditDTO("CUSTOM_EDITOR");
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.of(role));
+
+        OperationNotAllowedException exception = assertThrows(OperationNotAllowedException.class,
+                () -> roleService.updateRole(uuid, dto));
+
+        assertEquals("RoleOperationNotAllowed", exception.getCode());
+        assertEquals(originalName, role.getName());
+
+        verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
         verifyNoMoreInteractions(roleRepository);
 
         verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
