@@ -459,4 +459,20 @@ public class RoleServiceImplTest {
 
         verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
     }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "   ", "\t", "\n"})
+    void updateRole_whenNameIsNullOrBlank_shouldThrowEntityInvalidArgumentException(String name) {
+
+        UUID uuid = UUID.randomUUID();
+        RoleEditDTO dto = new RoleEditDTO(name);
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> roleService.updateRole(uuid, dto));
+
+        assertEquals("RoleInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
+    }
 }
