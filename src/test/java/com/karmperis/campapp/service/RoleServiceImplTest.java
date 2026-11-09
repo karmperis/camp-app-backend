@@ -510,4 +510,29 @@ public class RoleServiceImplTest {
 
         verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void updateRole_whenNameIsUsedByAnotherRole_shouldThrowEntityAlreadyExistsException() {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        UUID uuid = role.getUuid();
+        RoleEditDTO dto = new RoleEditDTO("CUSTOM_EDITOR");
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.of(role));
+
+        when(roleRepository.existsByNameAndUuidNot(dto.name(), uuid)).thenReturn(true);
+
+
+        assertThrows(EntityAlreadyExistsException.class, () -> roleService.updateRole(uuid, dto));
+
+        assertEquals("CUSTOM_VIEWER", role.getName());
+
+        verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
+        verify(roleRepository).existsByNameAndUuidNot(dto.name(), uuid);
+        verifyNoMoreInteractions(roleRepository);
+
+        verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
+    }
 }
