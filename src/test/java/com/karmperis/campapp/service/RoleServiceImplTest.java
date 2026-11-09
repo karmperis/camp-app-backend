@@ -491,4 +491,23 @@ public class RoleServiceImplTest {
 
         verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void updateRole_whenRoleIsNotFound_shouldThrowEntityNotFoundException() {
+
+        UUID uuid = UUID.randomUUID();
+        RoleEditDTO dto = new RoleEditDTO("CUSTOM_EDITOR");
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> roleService.updateRole(uuid, dto));
+
+        assertEquals("RoleNotFound", exception.getCode());
+
+        verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
+        verifyNoMoreInteractions(roleRepository);
+
+        verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
+    }
 }
