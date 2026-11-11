@@ -729,5 +729,43 @@ public class RoleServiceImplTest {
         verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
 
+    @Test
+    void updateRole_whenAnotherConstraintIsViolated_shouldRethrowException() {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        UUID uuid = role.getUuid();
+        RoleEditDTO dto = new RoleEditDTO("CUSTOM_EDITOR");
+
+        ConstraintViolationException constraintException = new ConstraintViolationException(
+                "Another constraint was violated", new SQLException("Integrity constraint violation", "23000"),
+                "some_other_constraint");
+
+        DataIntegrityViolationException databaseException = new DataIntegrityViolationException("Could not update role",
+                constraintException);
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.of(role));
+
+        when(roleRepository.existsByNameAndUuidNot(dto.name(), uuid)).thenReturn(false);
+
+        when(roleRepository.saveAndFlush(role)).thenThrow(databaseException);
+
+
+        DataIntegrityViolationException exception = assertThrows(DataIntegrityViolationException.class,
+                () -> roleService.updateRole(uuid, dto));
+
+        assertSame(databaseException, exception);
+
+        InOrder inOrder = inOrder(roleRepository, roleMapper);
+
+        inOrder.verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
+        inOrder.verify(roleRepository).existsByNameAndUuidNot(dto.name(), uuid);
+        inOrder.verify(roleMapper).updateRoleFromDTO(dto, role);
+        inOrder.verify(roleRepository).saveAndFlush(role);
+
+        verifyNoMoreInteractions(roleRepository, roleMapper);
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
 
 }
