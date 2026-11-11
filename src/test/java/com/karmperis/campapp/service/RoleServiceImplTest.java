@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -560,4 +561,50 @@ public class RoleServiceImplTest {
 
         verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN", "GUARDIAN", "LEADER"})
+    void updateRole_whenBuiltInRoleNameIsUnchanged_shouldSucceed(String name)
+            throws EntityNotFoundException, EntityAlreadyExistsException,
+            EntityInvalidArgumentException, OperationNotAllowedException {
+
+        Role role = new Role();
+        role.setName(name);
+
+        UUID uuid = role.getUuid();
+        RoleEditDTO dto = new RoleEditDTO(name);
+
+        RoleReadOnlyDTO expected = new RoleReadOnlyDTO(uuid, name);
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.of(role));
+
+        when(roleRepository.existsByNameAndUuidNot(name, uuid)).thenReturn(false);
+
+        when(roleRepository.saveAndFlush(role)).thenReturn(role);
+
+        when(roleMapper.mapToRoleReadOnlyDTO(role)).thenReturn(expected);
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            RoleReadOnlyDTO actual = roleService.updateRole(uuid, dto);
+
+            assertSame(expected, actual);
+            assertEquals(name, role.getName());
+
+            InOrder inOrder = inOrder(roleRepository, roleMapper);
+
+            inOrder.verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
+            inOrder.verify(roleRepository).existsByNameAndUuidNot(name, uuid);
+            inOrder.verify(roleMapper).updateRoleFromDTO(dto, role);
+            inOrder.verify(roleRepository).saveAndFlush(role);
+            inOrder.verify(roleMapper).mapToRoleReadOnlyDTO(role);
+
+            verifyNoMoreInteractions(roleRepository, roleMapper);
+            verifyNoInteractions(capabilityRepository, capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
 }
