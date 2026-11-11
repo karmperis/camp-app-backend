@@ -768,4 +768,17 @@ public class RoleServiceImplTest {
         verifyNoInteractions(capabilityRepository, capabilityMapper);
     }
 
+    @Test
+    void softDeleteRoleByUuid_whenUuidIsNull_shouldThrowEntityInvalidArgumentException() {
+
+        UUID uuid = null;
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> roleService.softDeleteRoleByUuid(uuid));
+
+        assertEquals("RoleInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
+    }
+
 }
