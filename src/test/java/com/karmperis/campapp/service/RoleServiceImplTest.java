@@ -798,4 +798,28 @@ public class RoleServiceImplTest {
 
         verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN", "GUARDIAN", "LEADER"})
+    void softDeleteRoleByUuid_whenRoleIsBuiltIn_shouldThrowOperationNotAllowedException(String name) {
+
+        Role role = new Role();
+        role.setName(name);
+
+        UUID uuid = role.getUuid();
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.of(role));
+
+        OperationNotAllowedException exception = assertThrows(OperationNotAllowedException.class,
+                () -> roleService.softDeleteRoleByUuid(uuid));
+
+        assertEquals("RoleOperationNotAllowed", exception.getCode());
+        assertNull(role.getDeletedAt());
+
+        verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
+        verifyNoMoreInteractions(roleRepository);
+
+        verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
+    }
+
 }
