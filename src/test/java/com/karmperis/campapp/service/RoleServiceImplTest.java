@@ -822,4 +822,33 @@ public class RoleServiceImplTest {
         verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
     }
 
+    @Test
+    void softDeleteRoleByUuid_whenRoleIsCustom_shouldSoftDelete()
+            throws EntityNotFoundException, EntityInvalidArgumentException, OperationNotAllowedException {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        UUID uuid = role.getUuid();
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.of(role));
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            roleService.softDeleteRoleByUuid(uuid);
+
+            assertNotNull(role.getDeletedAt());
+
+            verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
+            verify(roleRepository).saveAndFlush(role);
+
+            verifyNoMoreInteractions(roleRepository);
+
+            verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
 }
