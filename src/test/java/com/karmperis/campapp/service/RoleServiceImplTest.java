@@ -694,4 +694,40 @@ public class RoleServiceImplTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"uk_roles_name", "roles.uk_roles_name"})
+    void updateRole_whenNameConstraintIsViolated_shouldThrowEntityAlreadyExistsException(String constraintName) {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        UUID uuid = role.getUuid();
+        RoleEditDTO dto = new RoleEditDTO("CUSTOM_EDITOR");
+
+        ConstraintViolationException constraintException = new ConstraintViolationException("Duplicate role name",
+                new SQLException("Duplicate entry", "23000", 1062), constraintName);
+
+        DataIntegrityViolationException databaseException = new DataIntegrityViolationException("Could not update role",
+                constraintException);
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.of(role));
+
+        when(roleRepository.existsByNameAndUuidNot(dto.name(), uuid)).thenReturn(false);
+
+        when(roleRepository.saveAndFlush(role)).thenThrow(databaseException);
+
+        assertThrows(EntityAlreadyExistsException.class, () -> roleService.updateRole(uuid, dto));
+
+        InOrder inOrder = inOrder(roleRepository, roleMapper);
+
+        inOrder.verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
+        inOrder.verify(roleRepository).existsByNameAndUuidNot(dto.name(), uuid);
+        inOrder.verify(roleMapper).updateRoleFromDTO(dto, role);
+        inOrder.verify(roleRepository).saveAndFlush(role);
+
+        verifyNoMoreInteractions(roleRepository, roleMapper);
+        verifyNoInteractions(capabilityRepository, capabilityMapper);
+    }
+
+
 }
