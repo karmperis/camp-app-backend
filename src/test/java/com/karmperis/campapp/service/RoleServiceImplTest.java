@@ -607,4 +607,47 @@ public class RoleServiceImplTest {
         }
     }
 
+    @Test
+    void updateRole_whenDataIsValid_shouldReturnUpdatedRole()
+            throws EntityNotFoundException, EntityAlreadyExistsException,
+            EntityInvalidArgumentException, OperationNotAllowedException {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        UUID uuid = role.getUuid();
+        RoleEditDTO dto = new RoleEditDTO("CUSTOM_EDITOR");
+
+        RoleReadOnlyDTO expected = new RoleReadOnlyDTO(uuid, dto.name());
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.of(role));
+
+        when(roleRepository.existsByNameAndUuidNot(dto.name(), uuid)).thenReturn(false);
+
+        when(roleRepository.saveAndFlush(role)).thenReturn(role);
+
+        when(roleMapper.mapToRoleReadOnlyDTO(role)).thenReturn(expected);
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            RoleReadOnlyDTO actual = roleService.updateRole(uuid, dto);
+
+            assertSame(expected, actual);
+
+            InOrder inOrder = inOrder(roleRepository, roleMapper);
+
+            inOrder.verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
+            inOrder.verify(roleRepository).existsByNameAndUuidNot(dto.name(), uuid);
+            inOrder.verify(roleMapper).updateRoleFromDTO(dto, role);
+            inOrder.verify(roleRepository).saveAndFlush(role);
+            inOrder.verify(roleMapper).mapToRoleReadOnlyDTO(role);
+
+            verifyNoMoreInteractions(roleRepository, roleMapper);
+            verifyNoInteractions(capabilityRepository, capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
 }
