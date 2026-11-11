@@ -851,4 +851,41 @@ public class RoleServiceImplTest {
         }
     }
 
+    @Test
+    void softDeleteRoleByUuid_whenSaveFails_shouldRethrowExceptionAndNotRegisterCallback() {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        UUID uuid = role.getUuid();
+
+        DataIntegrityViolationException databaseException = new DataIntegrityViolationException("Could not save role");
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.of(role));
+
+        when(roleRepository.saveAndFlush(role)).thenThrow(databaseException);
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            DataIntegrityViolationException exception = assertThrows(DataIntegrityViolationException.class,
+                    () -> roleService.softDeleteRoleByUuid(uuid));
+
+            assertSame(databaseException, exception);
+
+            assertTrue(TransactionSynchronizationManager
+                    .getSynchronizations()
+                    .isEmpty());
+
+            verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
+            verify(roleRepository).saveAndFlush(role);
+
+            verifyNoMoreInteractions(roleRepository);
+
+            verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper
+            );
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
 }
