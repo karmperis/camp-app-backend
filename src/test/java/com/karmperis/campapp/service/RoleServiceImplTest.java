@@ -781,4 +781,21 @@ public class RoleServiceImplTest {
         verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
     }
 
+    @Test
+    void softDeleteRoleByUuid_whenRoleIsNotFound_shouldThrowEntityNotFoundException() {
+
+        UUID uuid = UUID.randomUUID();
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(uuid)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> roleService.softDeleteRoleByUuid(uuid));
+
+        assertEquals("RoleNotFound", exception.getCode());
+
+        verify(roleRepository).findByUuidAndDeletedAtIsNull(uuid);
+        verifyNoMoreInteractions(roleRepository);
+
+        verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
+    }
 }
