@@ -970,4 +970,52 @@ public class RoleServiceImplTest {
         verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
     }
 
+    @Test
+    void findCapabilitiesByRoleUuid_whenCapabilitiesExist_shouldReturnActiveCapabilitiesSortedByName()
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        Role role = new Role();
+        role.setName("CUSTOM_EDITOR");
+
+        Capability roleManage = new Capability();
+        roleManage.setName("ROLE_MANAGE");
+        roleManage.setDescription("Allows managing roles");
+
+        Capability applicationRead = new Capability();
+        applicationRead.setName("APPLICATION_READ");
+        applicationRead.setDescription("Allows viewing applications");
+
+        Capability deletedCapability = new Capability();
+        deletedCapability.setName("CAPABILITY_MANAGE");
+        deletedCapability.softDelete();
+
+        role.addCapability(roleManage);
+        role.addCapability(deletedCapability);
+        role.addCapability(applicationRead);
+
+        UUID roleUuid = role.getUuid();
+
+        CapabilityReadOnlyDTO applicationReadDto = new CapabilityReadOnlyDTO(applicationRead.getUuid(), applicationRead.getName(),
+                applicationRead.getDescription());
+
+        CapabilityReadOnlyDTO roleManageDto = new CapabilityReadOnlyDTO(roleManage.getUuid(), roleManage.getName(), roleManage.getDescription());
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)).thenReturn(Optional.of(role));
+
+        when(capabilityMapper.mapToCapabilityReadOnlyDTO(applicationRead)).thenReturn(applicationReadDto);
+
+        when(capabilityMapper.mapToCapabilityReadOnlyDTO(roleManage)).thenReturn(roleManageDto);
+
+        List<CapabilityReadOnlyDTO> actual = roleService.findCapabilitiesByRoleUuid(roleUuid);
+
+        assertEquals(List.of(applicationReadDto, roleManageDto), actual);
+
+        verify(roleRepository).findByUuidAndDeletedAtIsNull(roleUuid);
+        verify(capabilityMapper).mapToCapabilityReadOnlyDTO(applicationRead);
+        verify(capabilityMapper).mapToCapabilityReadOnlyDTO(roleManage);
+
+        verifyNoMoreInteractions(roleRepository, capabilityMapper);
+        verifyNoInteractions(roleMapper, capabilityRepository);
+    }
+
 }
