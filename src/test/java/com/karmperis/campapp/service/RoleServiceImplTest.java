@@ -1065,4 +1065,29 @@ public class RoleServiceImplTest {
         verifyNoInteractions(roleRepository, roleMapper, capabilityMapper);
     }
 
+    @Test
+    void assignCapabilityToRole_whenCapabilityIsSoftDeleted_shouldThrowEntityNotFoundException() {
+
+        UUID roleUuid = UUID.randomUUID();
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+        capability.softDelete();
+
+        UUID capabilityUuid = capability.getUuid();
+
+        when(capabilityRepository.findByUuidForUpdate(capabilityUuid)).thenReturn(Optional.of(capability));
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> roleService.assignCapabilityToRole(roleUuid, capabilityUuid));
+
+        assertEquals("CapabilityNotFound", exception.getCode());
+        assertTrue(capability.getAllRoles().isEmpty());
+
+        verify(capabilityRepository).findByUuidForUpdate(capabilityUuid);
+        verifyNoMoreInteractions(capabilityRepository);
+
+        verifyNoInteractions(roleRepository, roleMapper, capabilityMapper);
+    }
+
 }
