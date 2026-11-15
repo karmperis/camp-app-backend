@@ -901,4 +901,22 @@ public class RoleServiceImplTest {
 
         verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void findCapabilitiesByRoleUuid_whenRoleIsNotFound_shouldThrowEntityNotFoundException() {
+
+        UUID roleUuid = UUID.randomUUID();
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> roleService.findCapabilitiesByRoleUuid(roleUuid));
+
+        assertEquals("RoleNotFound", exception.getCode());
+
+        verify(roleRepository).findByUuidAndDeletedAtIsNull(roleUuid);
+        verifyNoMoreInteractions(roleRepository);
+
+        verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
+    }
 }
