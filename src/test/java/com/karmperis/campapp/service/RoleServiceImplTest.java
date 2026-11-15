@@ -4,6 +4,7 @@ import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
 import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
 import com.karmperis.campapp.core.exceptions.EntityNotFoundException;
 import com.karmperis.campapp.core.exceptions.OperationNotAllowedException;
+import com.karmperis.campapp.dto.CapabilityReadOnlyDTO;
 import com.karmperis.campapp.dto.RoleEditDTO;
 import com.karmperis.campapp.dto.RoleInsertDTO;
 import com.karmperis.campapp.dto.RoleReadOnlyDTO;
@@ -913,6 +914,27 @@ public class RoleServiceImplTest {
                 () -> roleService.findCapabilitiesByRoleUuid(roleUuid));
 
         assertEquals("RoleNotFound", exception.getCode());
+
+        verify(roleRepository).findByUuidAndDeletedAtIsNull(roleUuid);
+        verifyNoMoreInteractions(roleRepository);
+
+        verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
+    }
+
+    @Test
+    void findCapabilitiesByRoleUuid_whenRoleHasNoCapabilities_shouldReturnEmptyList()
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        UUID roleUuid = role.getUuid();
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)).thenReturn(Optional.of(role));
+
+        List<CapabilityReadOnlyDTO> actual = roleService.findCapabilitiesByRoleUuid(roleUuid);
+
+        assertTrue(actual.isEmpty());
 
         verify(roleRepository).findByUuidAndDeletedAtIsNull(roleUuid);
         verifyNoMoreInteractions(roleRepository);
