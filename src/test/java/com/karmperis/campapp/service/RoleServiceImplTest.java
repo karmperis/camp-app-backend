@@ -1046,4 +1046,23 @@ public class RoleServiceImplTest {
         verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
     }
 
+    @Test
+    void assignCapabilityToRole_whenCapabilityIsNotFound_shouldThrowEntityNotFoundException() {
+
+        UUID roleUuid = UUID.randomUUID();
+        UUID capabilityUuid = UUID.randomUUID();
+
+        when(capabilityRepository.findByUuidForUpdate(capabilityUuid)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> roleService.assignCapabilityToRole(roleUuid, capabilityUuid));
+
+        assertEquals("CapabilityNotFound", exception.getCode());
+
+        verify(capabilityRepository).findByUuidForUpdate(capabilityUuid);
+        verifyNoMoreInteractions(capabilityRepository);
+
+        verifyNoInteractions(roleRepository, roleMapper, capabilityMapper);
+    }
+
 }
