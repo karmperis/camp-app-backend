@@ -10,6 +10,7 @@ import com.karmperis.campapp.dto.RoleInsertDTO;
 import com.karmperis.campapp.dto.RoleReadOnlyDTO;
 import com.karmperis.campapp.mapper.CapabilityMapper;
 import com.karmperis.campapp.mapper.RoleMapper;
+import com.karmperis.campapp.model.Capability;
 import com.karmperis.campapp.model.Role;
 import com.karmperis.campapp.repository.CapabilityRepository;
 import com.karmperis.campapp.repository.RoleRepository;
@@ -941,4 +942,32 @@ public class RoleServiceImplTest {
 
         verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void findCapabilitiesByRoleUuid_whenOnlySoftDeletedCapabilitiesExist_shouldReturnEmptyList()
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+        capability.softDelete();
+
+        role.addCapability(capability);
+
+        UUID roleUuid = role.getUuid();
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)).thenReturn(Optional.of(role));
+
+        List<CapabilityReadOnlyDTO> actual = roleService.findCapabilitiesByRoleUuid(roleUuid);
+
+        assertTrue(actual.isEmpty());
+
+        verify(roleRepository).findByUuidAndDeletedAtIsNull(roleUuid);
+        verifyNoMoreInteractions(roleRepository);
+
+        verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
+    }
+
 }
