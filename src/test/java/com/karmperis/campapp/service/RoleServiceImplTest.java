@@ -888,4 +888,17 @@ public class RoleServiceImplTest {
             TransactionSynchronizationManager.clearSynchronization();
         }
     }
+
+    @Test
+    void findCapabilitiesByRoleUuid_whenUuidIsNull_shouldThrowEntityInvalidArgumentException() {
+
+        UUID roleUuid = null;
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> roleService.findCapabilitiesByRoleUuid(roleUuid));
+
+        assertEquals("RoleInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
+    }
 }
