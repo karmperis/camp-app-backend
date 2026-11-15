@@ -1119,4 +1119,36 @@ public class RoleServiceImplTest {
         verifyNoInteractions(roleMapper, capabilityMapper);
     }
 
+    @Test
+    void assignCapabilityToRole_whenCapabilityIsAlreadyAssigned_shouldThrowEntityAlreadyExistsException() {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+
+        role.addCapability(capability);
+
+        UUID roleUuid = role.getUuid();
+        UUID capabilityUuid = capability.getUuid();
+
+        when(capabilityRepository.findByUuidForUpdate(capabilityUuid)).thenReturn(Optional.of(capability));
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)).thenReturn(Optional.of(role));
+
+        assertThrows(EntityAlreadyExistsException.class, () -> roleService.assignCapabilityToRole(roleUuid, capabilityUuid));
+
+        assertEquals(1, role.getAllCapabilities().size());
+        assertTrue(role.hasCapability(capability));
+        assertTrue(capability.getAllRoles().contains(role));
+
+        InOrder inOrder = inOrder(capabilityRepository, roleRepository);
+        inOrder.verify(capabilityRepository).findByUuidForUpdate(capabilityUuid);
+        inOrder.verify(roleRepository).findByUuidAndDeletedAtIsNull(roleUuid);
+
+        verifyNoMoreInteractions(capabilityRepository, roleRepository);
+        verifyNoInteractions(roleMapper, capabilityMapper);
+    }
+
 }
