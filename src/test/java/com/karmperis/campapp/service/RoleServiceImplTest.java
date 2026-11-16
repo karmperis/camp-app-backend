@@ -1151,4 +1151,42 @@ public class RoleServiceImplTest {
         verifyNoInteractions(roleMapper, capabilityMapper);
     }
 
+    @Test
+    void assignCapabilityToRole_whenNotAlreadyAssigned_shouldAssignCapability()
+            throws EntityNotFoundException, EntityAlreadyExistsException, EntityInvalidArgumentException {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+
+        UUID roleUuid = role.getUuid();
+        UUID capabilityUuid = capability.getUuid();
+
+        when(capabilityRepository.findByUuidForUpdate(capabilityUuid)).thenReturn(Optional.of(capability));
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)).thenReturn(Optional.of(role));
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            roleService.assignCapabilityToRole(roleUuid, capabilityUuid);
+
+            assertTrue(role.hasCapability(capability));
+            assertTrue(capability.getAllRoles().contains(role));
+            assertEquals(1, role.getAllCapabilities().size());
+            assertEquals(1, capability.getAllRoles().size());
+
+            InOrder inOrder = inOrder(capabilityRepository, roleRepository);
+            inOrder.verify(capabilityRepository).findByUuidForUpdate(capabilityUuid);
+            inOrder.verify(roleRepository).findByUuidAndDeletedAtIsNull(roleUuid);
+            inOrder.verify(roleRepository).flush();
+
+            verifyNoMoreInteractions(capabilityRepository, roleRepository);
+            verifyNoInteractions(roleMapper, capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
 }
