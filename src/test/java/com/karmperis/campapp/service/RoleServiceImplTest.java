@@ -1346,4 +1346,20 @@ public class RoleServiceImplTest {
         verifyNoMoreInteractions(capabilityRepository, roleRepository);
         verifyNoInteractions(roleMapper, capabilityMapper);
     }
+
+    @Test
+    void removeCapabilityFromRole_whenRoleUuidIsNull_shouldThrowEntityInvalidArgumentException() {
+
+        UUID roleUuid = null;
+        UUID capabilityUuid = UUID.randomUUID();
+
+        EntityInvalidArgumentException exception = assertThrows(EntityInvalidArgumentException.class,
+                () -> roleService.removeCapabilityFromRole(roleUuid, capabilityUuid));
+
+        assertEquals("RoleInvalidArgument", exception.getCode());
+
+        verifyNoInteractions(roleRepository, roleMapper, capabilityRepository, capabilityMapper);
+    }
+
+
 }
