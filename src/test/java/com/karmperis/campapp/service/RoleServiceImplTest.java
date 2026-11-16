@@ -1189,4 +1189,42 @@ public class RoleServiceImplTest {
             TransactionSynchronizationManager.clearSynchronization();
         }
     }
+
+    @Test
+    void assignCapabilityToRole_whenAssociationConstraintIsViolated_shouldThrowEntityAlreadyExistsException() {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+
+        UUID roleUuid = role.getUuid();
+        UUID capabilityUuid = capability.getUuid();
+
+        ConstraintViolationException constraintException = new ConstraintViolationException(
+                "Duplicate role capability association", new SQLException("Duplicate entry", "23000", 1062),
+                "roles_capabilities.PRIMARY");
+
+        DataIntegrityViolationException databaseException = new DataIntegrityViolationException("Could not assign capability",
+                constraintException);
+
+        when(capabilityRepository.findByUuidForUpdate(capabilityUuid)).thenReturn(Optional.of(capability));
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)).thenReturn(Optional.of(role));
+
+        doThrow(databaseException)
+                .when(roleRepository)
+                .flush();
+
+        assertThrows(EntityAlreadyExistsException.class, () -> roleService.assignCapabilityToRole(roleUuid, capabilityUuid));
+
+        InOrder inOrder = inOrder(capabilityRepository, roleRepository);
+        inOrder.verify(capabilityRepository).findByUuidForUpdate(capabilityUuid);
+        inOrder.verify(roleRepository).findByUuidAndDeletedAtIsNull(roleUuid);
+        inOrder.verify(roleRepository).flush();
+
+        verifyNoMoreInteractions(capabilityRepository, roleRepository);
+        verifyNoInteractions(roleMapper, capabilityMapper);
+    }
 }
