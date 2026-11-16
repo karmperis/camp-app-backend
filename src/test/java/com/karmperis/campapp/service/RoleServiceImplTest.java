@@ -1268,4 +1268,45 @@ public class RoleServiceImplTest {
         verifyNoMoreInteractions(capabilityRepository, roleRepository);
         verifyNoInteractions(roleMapper, capabilityMapper);
     }
+
+    @Test
+    void assignCapabilityToRole_whenSqlErrorCodeIsNotDuplicate_shouldRethrowException() {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+
+        UUID roleUuid = role.getUuid();
+        UUID capabilityUuid = capability.getUuid();
+
+        ConstraintViolationException constraintException = new ConstraintViolationException("Non-duplicate constraint violation",
+                new SQLException("Integrity constraint violation", "23000", 0), "roles_capabilities.PRIMARY");
+
+        DataIntegrityViolationException databaseException = new DataIntegrityViolationException("Could not assign capability",
+                constraintException);
+
+        when(capabilityRepository.findByUuidForUpdate(capabilityUuid)).thenReturn(Optional.of(capability));
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)).thenReturn(Optional.of(role));
+
+        doThrow(databaseException)
+                .when(roleRepository)
+                .flush();
+
+        DataIntegrityViolationException exception = assertThrows(DataIntegrityViolationException.class,
+                () -> roleService.assignCapabilityToRole(roleUuid, capabilityUuid));
+
+        assertSame(databaseException, exception);
+
+        InOrder inOrder = inOrder(capabilityRepository, roleRepository);
+
+        inOrder.verify(capabilityRepository).findByUuidForUpdate(capabilityUuid);
+        inOrder.verify(roleRepository).findByUuidAndDeletedAtIsNull(roleUuid);
+        inOrder.verify(roleRepository).flush();
+
+        verifyNoMoreInteractions(capabilityRepository, roleRepository);
+        verifyNoInteractions(roleMapper, capabilityMapper);
+    }
 }
