@@ -30,6 +30,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -1482,6 +1483,54 @@ public class RoleServiceImplTest {
 
             inOrder.verify(roleRepository).findByUuidAndDeletedAtIsNull(roleUuid);
             inOrder.verify(capabilityRepository).findByUuidAndDeletedAtIsNull(capabilityUuid);
+
+            verifyNoMoreInteractions(roleRepository, capabilityRepository);
+            verifyNoInteractions(roleMapper, capabilityMapper);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    void removeCapabilityFromRole_whenOtherRelationshipsExist_shouldPreserveThem()
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        Role role = new Role();
+        role.setName("CUSTOM_EDITOR");
+
+        Role otherRole = new Role();
+        otherRole.setName("CUSTOM_VIEWER");
+
+        Capability capabilityToRemove = new Capability();
+        capabilityToRemove.setName("APPLICATION_READ");
+
+        Capability capabilityToKeep = new Capability();
+        capabilityToKeep.setName("APPLICATION_EDIT");
+
+        role.addCapability(capabilityToRemove);
+        role.addCapability(capabilityToKeep);
+        otherRole.addCapability(capabilityToRemove);
+
+        UUID roleUuid = role.getUuid();
+        UUID capabilityUuid = capabilityToRemove.getUuid();
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)).thenReturn(Optional.of(role));
+
+        when(capabilityRepository.findByUuidAndDeletedAtIsNull(capabilityUuid)).thenReturn(Optional.of(capabilityToRemove));
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            roleService.removeCapabilityFromRole(roleUuid, capabilityUuid);
+
+            assertEquals(Set.of(capabilityToKeep), role.getAllCapabilities());
+            assertEquals(Set.of(otherRole), capabilityToRemove.getAllRoles());
+
+            assertEquals(Set.of(role), capabilityToKeep.getAllRoles());
+            assertEquals(Set.of(capabilityToRemove), otherRole.getAllCapabilities());
+
+            verify(roleRepository).findByUuidAndDeletedAtIsNull(roleUuid);
+            verify(capabilityRepository).findByUuidAndDeletedAtIsNull(capabilityUuid);
 
             verifyNoMoreInteractions(roleRepository, capabilityRepository);
             verifyNoInteractions(roleMapper, capabilityMapper);
