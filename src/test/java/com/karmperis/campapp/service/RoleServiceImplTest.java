@@ -1393,4 +1393,31 @@ public class RoleServiceImplTest {
 
         verifyNoInteractions(roleMapper, capabilityRepository, capabilityMapper);
     }
+
+    @Test
+    void removeCapabilityFromRole_whenCapabilityIsNotFound_shouldThrowEntityNotFoundException() {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        UUID roleUuid = role.getUuid();
+        UUID capabilityUuid = UUID.randomUUID();
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)).thenReturn(Optional.of(role));
+
+        when(capabilityRepository.findByUuidAndDeletedAtIsNull(capabilityUuid)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> roleService.removeCapabilityFromRole(roleUuid, capabilityUuid));
+
+        assertEquals("CapabilityNotFound", exception.getCode());
+
+        InOrder inOrder = inOrder(roleRepository, capabilityRepository);
+
+        inOrder.verify(roleRepository).findByUuidAndDeletedAtIsNull(roleUuid);
+        inOrder.verify(capabilityRepository).findByUuidAndDeletedAtIsNull(capabilityUuid);
+
+        verifyNoMoreInteractions(roleRepository, capabilityRepository);
+        verifyNoInteractions(roleMapper, capabilityMapper);
+    }
 }
