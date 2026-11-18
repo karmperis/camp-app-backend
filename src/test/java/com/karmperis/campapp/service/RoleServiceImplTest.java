@@ -1420,4 +1420,34 @@ public class RoleServiceImplTest {
         verifyNoMoreInteractions(roleRepository, capabilityRepository);
         verifyNoInteractions(roleMapper, capabilityMapper);
     }
+
+    @Test
+    void removeCapabilityFromRole_whenCapabilityIsNotAssigned_shouldThrowEntityInvalidArgumentException() {
+
+        Role role = new Role();
+        role.setName("CUSTOM_VIEWER");
+
+        Capability capability = new Capability();
+        capability.setName("APPLICATION_READ");
+
+        UUID roleUuid = role.getUuid();
+        UUID capabilityUuid = capability.getUuid();
+
+        when(roleRepository.findByUuidAndDeletedAtIsNull(roleUuid)).thenReturn(Optional.of(role));
+
+        when(capabilityRepository.findByUuidAndDeletedAtIsNull(capabilityUuid)).thenReturn(Optional.of(capability));
+
+        assertThrows(EntityInvalidArgumentException.class, () -> roleService.removeCapabilityFromRole(roleUuid, capabilityUuid));
+
+        assertTrue(role.getAllCapabilities().isEmpty());
+        assertTrue(capability.getAllRoles().isEmpty());
+
+        InOrder inOrder = inOrder(roleRepository, capabilityRepository);
+
+        inOrder.verify(roleRepository).findByUuidAndDeletedAtIsNull(roleUuid);
+        inOrder.verify(capabilityRepository).findByUuidAndDeletedAtIsNull(capabilityUuid);
+
+        verifyNoMoreInteractions(roleRepository, capabilityRepository);
+        verifyNoInteractions(roleMapper, capabilityMapper);
+    }
 }
