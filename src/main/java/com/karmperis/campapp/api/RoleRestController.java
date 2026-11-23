@@ -10,6 +10,7 @@ import com.karmperis.campapp.dto.RoleReadOnlyDTO;
 import com.karmperis.campapp.dto.ValidationErrorResponseDTO;
 import com.karmperis.campapp.service.IRoleService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -142,5 +144,29 @@ public class RoleRestController {
             throws EntityNotFoundException, EntityInvalidArgumentException {
 
         return ResponseEntity.ok(roleService.findRoleByUuid(uuid));
+    }
+
+    /**
+     * Returns a list of all non-soft-deleted roles sorted by name in ascending order.
+     *
+     * @return HTTP 200 with a list of roles
+     */
+    @Operation(
+            summary = "Get all roles",
+            description = "Returns a list of all non-soft-deleted roles sorted by name in ascending order."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Roles retrieved successfully, or an empty list if none are found",
+            content = @Content(
+                    mediaType = "application/json",
+                    array = @ArraySchema(
+                            schema = @Schema(implementation = RoleReadOnlyDTO.class)
+                    )
+            )
+    )
+    @GetMapping
+    public ResponseEntity<List<RoleReadOnlyDTO>> getAllRoles() {
+        return ResponseEntity.ok(roleService.findAllRoles());
     }
 }
