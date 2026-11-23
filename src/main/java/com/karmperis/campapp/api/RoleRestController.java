@@ -2,6 +2,7 @@ package com.karmperis.campapp.api;
 
 import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
 import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
+import com.karmperis.campapp.core.exceptions.EntityNotFoundException;
 import com.karmperis.campapp.core.exceptions.ValidationException;
 import com.karmperis.campapp.dto.ErrorResponseDTO;
 import com.karmperis.campapp.dto.RoleInsertDTO;
@@ -17,13 +18,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.UUID;
 
 /**
  * REST controller for managing roles.
@@ -102,5 +101,46 @@ public class RoleRestController {
         return ResponseEntity
                 .created(location)
                 .body(roleReadOnlyDTO);
+    }
+
+    /**
+     * Retrieves a non-soft-deleted role by its UUID.
+     *
+     * @param uuid the UUID of the role to retrieve
+     * @return a 200 OK response containing the role DTO
+     * @throws EntityNotFoundException        if the role does not exist or is soft-deleted
+     * @throws EntityInvalidArgumentException if the UUID is null
+     */
+    @Operation(
+            summary = "Get role by UUID",
+            description = "Retrieves a non-soft-deleted role by its UUID."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Role found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = RoleReadOnlyDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Role not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid UUID format"
+            )
+    })
+    @GetMapping("/{uuid}")
+    public ResponseEntity<RoleReadOnlyDTO> getRoleByUuid(@PathVariable("uuid") UUID uuid)
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        return ResponseEntity.ok(roleService.findRoleByUuid(uuid));
     }
 }
