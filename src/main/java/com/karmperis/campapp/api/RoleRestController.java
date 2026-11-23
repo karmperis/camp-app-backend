@@ -230,4 +230,56 @@ public class RoleRestController {
         RoleReadOnlyDTO updatedRoleDto = roleService.updateRole(uuid, roleEditDTO);
         return ResponseEntity.ok(updatedRoleDto);
     }
+
+    /**
+     * Soft deletes a role by its UUID.
+     *
+     * @param uuid the UUID of the role to soft-delete
+     * @return HTTP 204 with no content
+     * @throws EntityNotFoundException        if the role does not exist or is soft-deleted
+     * @throws EntityInvalidArgumentException if service input validation fails
+     * @throws OperationNotAllowedException   if a built-in role is being soft-deleted
+     */
+    @Operation(
+            summary = "Soft delete a role",
+            description = "Marks a non-soft-deleted role as deleted. " + "Built-in roles cannot be deleted."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Role successfully soft-deleted",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid UUID format",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Role does not exist or is already soft-deleted",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Built-in roles cannot be deleted",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            )
+    })
+    @DeleteMapping("/{uuid}")
+    public ResponseEntity<Void> deleteRole(@PathVariable("uuid") UUID uuid)
+            throws EntityNotFoundException, EntityInvalidArgumentException, OperationNotAllowedException {
+
+        roleService.softDeleteRoleByUuid(uuid);
+        return ResponseEntity.noContent().build();
+    }
 }
