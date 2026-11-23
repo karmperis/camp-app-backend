@@ -1,13 +1,7 @@
 package com.karmperis.campapp.api;
 
-import com.karmperis.campapp.core.exceptions.EntityAlreadyExistsException;
-import com.karmperis.campapp.core.exceptions.EntityInvalidArgumentException;
-import com.karmperis.campapp.core.exceptions.EntityNotFoundException;
-import com.karmperis.campapp.core.exceptions.ValidationException;
-import com.karmperis.campapp.dto.ErrorResponseDTO;
-import com.karmperis.campapp.dto.RoleInsertDTO;
-import com.karmperis.campapp.dto.RoleReadOnlyDTO;
-import com.karmperis.campapp.dto.ValidationErrorResponseDTO;
+import com.karmperis.campapp.core.exceptions.*;
+import com.karmperis.campapp.dto.*;
 import com.karmperis.campapp.service.IRoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -168,5 +162,72 @@ public class RoleRestController {
     @GetMapping
     public ResponseEntity<List<RoleReadOnlyDTO>> getAllRoles() {
         return ResponseEntity.ok(roleService.findAllRoles());
+    }
+
+    /**
+     * Updates the name of a non-soft-deleted role by its UUID.
+     *
+     * @param uuid          the UUID of the role to update
+     * @param roleEditDTO   the DTO containing the updated role name
+     * @param bindingResult the result of DTO validation
+     * @return HTTP 200 with the updated role DTO
+     * @throws ValidationException            if DTO validation fails
+     * @throws EntityNotFoundException        if the role does not exist or is soft-deleted
+     * @throws OperationNotAllowedException   if a built-in role is being renamed
+     * @throws EntityAlreadyExistsException   if the name is used by another role,
+     *                                        including a soft-deleted role
+     * @throws EntityInvalidArgumentException if service input validation fails
+     */
+    @Operation(
+            summary = "Update an existing role",
+            description = "Updates the name of a non-soft-deleted role by its UUID. " + "Built-in roles cannot be renamed."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Role updated successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = RoleReadOnlyDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Validation error",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ValidationErrorResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Role does not exist or is soft-deleted",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Role name is already in use or a built-in role cannot be renamed",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            )
+    })
+    @PutMapping("/{uuid}")
+    public ResponseEntity<RoleReadOnlyDTO> updateRole(@PathVariable("uuid") UUID uuid,
+                                                      @Valid @RequestBody RoleEditDTO roleEditDTO,
+                                                      BindingResult bindingResult)
+            throws ValidationException, EntityNotFoundException, OperationNotAllowedException,
+            EntityAlreadyExistsException, EntityInvalidArgumentException {
+
+        if (bindingResult.hasErrors()) {
+            throw new ValidationException("Role", "Invalid role update data", bindingResult);
+        }
+
+        RoleReadOnlyDTO updatedRoleDto = roleService.updateRole(uuid, roleEditDTO);
+        return ResponseEntity.ok(updatedRoleDto);
     }
 }
