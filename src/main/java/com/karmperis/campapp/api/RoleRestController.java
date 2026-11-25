@@ -339,4 +339,48 @@ public class RoleRestController {
         roleService.assignCapabilityToRole(roleUuid, capabilityUuid);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Removes a non-soft-deleted assigned capability from a non-soft-deleted role.
+     *
+     * @param roleUuid       the UUID of the role to remove the capability from
+     * @param capabilityUuid the UUID of the capability to remove
+     * @return HTTP 204 with no content
+     * @throws EntityNotFoundException        if the role or capability does not exist or is soft-deleted
+     * @throws EntityInvalidArgumentException if either UUID is null or the capability is not assigned to the role
+     */
+    @Operation(
+            summary = "Remove capability from role",
+            description = "Removes a non-soft-deleted assigned capability from a non-soft-deleted role."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Capability successfully removed from role",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid UUID format or capability is not assigned to role",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Role or capability does not exist or is soft-deleted",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            )
+    })
+    @DeleteMapping("/{roleUuid}/capabilities/{capabilityUuid}")
+    public ResponseEntity<Void> removeCapability(@PathVariable("roleUuid") UUID roleUuid, @PathVariable("capabilityUuid") UUID capabilityUuid)
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        roleService.removeCapabilityFromRole(roleUuid, capabilityUuid);
+        return ResponseEntity.noContent().build();
+    }
 }
