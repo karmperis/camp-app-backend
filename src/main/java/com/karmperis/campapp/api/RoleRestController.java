@@ -383,4 +383,49 @@ public class RoleRestController {
         roleService.removeCapabilityFromRole(roleUuid, capabilityUuid);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Retrieves all non-soft-deleted capabilities assigned to a non-soft-deleted role,
+     * sorted by name in ascending order.
+     *
+     * @param roleUuid the UUID of the role
+     * @return HTTP 200 with the capability DTOs, or an empty list if none are found
+     * @throws EntityNotFoundException        if the role does not exist or is soft-deleted
+     * @throws EntityInvalidArgumentException if the role UUID is null
+     */
+    @Operation(
+            summary = "Get role capabilities",
+            description = "Retrieves all non-soft-deleted assigned capabilities assigned to a non-soft-deleted role."
+                    + "Sorted by name in ascending order."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Capabilities retrieved successfully, or an empty list if none are found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(
+                                    schema = @Schema(implementation = CapabilityReadOnlyDTO.class)
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid role UUID format"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Role does not exist or is soft-deleted",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            )
+    })
+    @GetMapping("/{roleUuid}/capabilities/view")
+    public ResponseEntity<List<CapabilityReadOnlyDTO>> getRoleCapabilities(@PathVariable("roleUuid") UUID roleUuid)
+            throws EntityNotFoundException, EntityInvalidArgumentException {
+
+        return ResponseEntity.ok(roleService.findCapabilitiesByRoleUuid(roleUuid));
+    }
 }
