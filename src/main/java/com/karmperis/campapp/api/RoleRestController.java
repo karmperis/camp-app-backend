@@ -450,4 +450,29 @@ public class RoleRestController {
 
         return ResponseEntity.ok(roleService.findCapabilitiesByRoleUuid(roleUuid));
     }
+
+    /**
+     * Retrieves all soft-deleted roles sorted by name in ascending order.
+     *
+     * @return HTTP 200 with the role DTOs, or an empty list if none are found
+     */
+    @Operation(
+            summary = "Get all soft-deleted roles",
+            description = "Retrieves all soft-deleted roles sorted by name in ascending order."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Soft-deleted roles retrieved successfully, or an empty list if none are found",
+            content = @Content(
+                    mediaType = "application/json",
+                    array = @ArraySchema(
+                            schema = @Schema(implementation = RoleReadOnlyDTO.class)
+                    )
+            )
+    )
+    @GetMapping("/soft-deleted")
+    public ResponseEntity<List<RoleReadOnlyDTO>> getAllSoftDeletedRoles() {
+
+        return ResponseEntity.ok(roleService.findAllSoftDeletedRoles());
+    }
 }
