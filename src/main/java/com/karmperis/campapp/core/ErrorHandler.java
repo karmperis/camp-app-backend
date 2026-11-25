@@ -5,9 +5,13 @@ import com.karmperis.campapp.dto.ErrorResponseDTO;
 import com.karmperis.campapp.dto.ValidationErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.AuthenticationException;
@@ -15,6 +19,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.HashMap;
@@ -201,5 +207,43 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponseDTO("INTERNAL_SERVER_ERROR", "An unexpected error occurred."));
+    }
+
+    /**
+     * Handles request parameter type mismatches.
+     *
+     * @return an error response with the supplied HTTP status
+     */
+    @Override
+    protected ResponseEntity<Object> handleTypeMismatch(TypeMismatchException ex, HttpHeaders headers,
+                                                        HttpStatusCode status, WebRequest request) {
+
+        String message = "A request parameter has an invalid format.";
+
+        if (ex instanceof MethodArgumentTypeMismatchException mismatch) {
+            message = "Parameter '" + mismatch.getName() + "' has an invalid format.";
+        }
+
+        log.warn("Request parameter type mismatch. Message={}", message);
+
+        ErrorResponseDTO body = new ErrorResponseDTO("INVALID_PARAMETER", message);
+
+        return handleExceptionInternal(ex, body, headers, status, request);
+    }
+
+    /**
+     * Handles an unreadable or missing required request body.
+     *
+     * @return an error response with the supplied HTTP status
+     */
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers,
+                                                                  HttpStatusCode status, WebRequest request) {
+
+        log.warn("Request body is missing or unreadable.");
+
+        ErrorResponseDTO body = new ErrorResponseDTO("INVALID_REQUEST_BODY", "Request body is missing or contains invalid JSON.");
+
+        return handleExceptionInternal(ex, body, headers, status, request);
     }
 }
