@@ -282,4 +282,61 @@ public class RoleRestController {
         roleService.softDeleteRoleByUuid(uuid);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Assigns a non-soft-deleted capability to a non-soft-deleted role.
+     *
+     * @param roleUuid       the UUID of the role to assign the capability to
+     * @param capabilityUuid the UUID of the capability to assign
+     * @return HTTP 204 with no content
+     * @throws EntityNotFoundException        if the role or capability does not exist or is soft-deleted
+     * @throws EntityAlreadyExistsException   if the capability is already assigned to the role
+     * @throws EntityInvalidArgumentException if either UUID is null
+     */
+    @Operation(
+            summary = "Assign capability to role",
+            description = "Assigns a non-soft-deleted capability to a non-soft-deleted role."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Capability successfully assigned to role",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid role or capability UUID format"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Role or capability does not exist or is soft-deleted",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Capability already assigned to role",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal Server Error",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            )
+    })
+    @PostMapping("/{roleUuid}/capabilities/{capabilityUuid}")
+    public ResponseEntity<Void> assignCapability(@PathVariable("roleUuid") UUID roleUuid, @PathVariable("capabilityUuid") UUID capabilityUuid)
+            throws EntityNotFoundException, EntityAlreadyExistsException, EntityInvalidArgumentException {
+
+        roleService.assignCapabilityToRole(roleUuid, capabilityUuid);
+        return ResponseEntity.noContent().build();
+    }
 }
