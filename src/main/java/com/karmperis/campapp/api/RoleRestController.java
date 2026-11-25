@@ -55,10 +55,15 @@ public class RoleRestController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Validation error",
+                    description = "Invalid request body or input data",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ValidationErrorResponseDTO.class)
+                            schema = @Schema(
+                                    anyOf = {
+                                            ValidationErrorResponseDTO.class,
+                                            ErrorResponseDTO.class
+                                    }
+                            )
                     )
             ),
             @ApiResponse(
@@ -121,16 +126,20 @@ public class RoleRestController {
                     )
             ),
             @ApiResponse(
-                    responseCode = "404",
-                    description = "Role not found",
+                    responseCode = "400",
+                    description = "Invalid UUID format",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponseDTO.class)
                     )
             ),
             @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid UUID format"
+                    responseCode = "404",
+                    description = "Role not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
             )
     })
     @GetMapping("/{uuid}")
@@ -193,10 +202,15 @@ public class RoleRestController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Validation error",
+                    description = "Invalid request body or input data",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ValidationErrorResponseDTO.class)
+                            schema = @Schema(
+                                    anyOf = {
+                                            ValidationErrorResponseDTO.class,
+                                            ErrorResponseDTO.class
+                                    }
+                            )
                     )
             ),
             @ApiResponse(
@@ -305,7 +319,11 @@ public class RoleRestController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid role or capability UUID format"
+                    description = "Invalid role or capability UUID format",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -395,8 +413,8 @@ public class RoleRestController {
      */
     @Operation(
             summary = "Get role capabilities",
-            description = "Retrieves all non-soft-deleted assigned capabilities assigned to a non-soft-deleted role."
-                    + "Sorted by name in ascending order."
+            description = "Retrieves all non-soft-deleted capabilities assigned to a non-soft-deleted role, "
+                    + "sorted by name in ascending order."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -411,7 +429,11 @@ public class RoleRestController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid role UUID format"
+                    description = "Invalid role UUID format",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -422,7 +444,7 @@ public class RoleRestController {
                     )
             )
     })
-    @GetMapping("/{roleUuid}/capabilities/view")
+    @GetMapping("/{roleUuid}/capabilities")
     public ResponseEntity<List<CapabilityReadOnlyDTO>> getRoleCapabilities(@PathVariable("roleUuid") UUID roleUuid)
             throws EntityNotFoundException, EntityInvalidArgumentException {
 
